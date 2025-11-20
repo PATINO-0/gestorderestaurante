@@ -9,11 +9,16 @@ from restaurant.permissions import RoleRequiredMixin
 
 class DashboardView(RoleRequiredMixin, TemplateView):
     template_name = 'restaurant/dashboard.html'
-    allowed_roles = ['ADMIN', 'WAITER']  # solo admin y mesero ven dashboard
+    # 🔹 Todos los roles autenticados pueden entrar aquí
+    allowed_roles = ['ADMIN', 'WAITER', 'CUSTOMER']
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        user = self.request.user
+
+        # Si es cliente, no hace falta cargar estadísticas pesadas,
+        # pero podemos dejarlo por si quieres mostrar algo luego.
         total_orders = Order.objects.count()
         total_reservations = Reservation.objects.count()
         total_customers = User.objects.filter(role='CUSTOMER').count()
@@ -47,5 +52,6 @@ class DashboardView(RoleRequiredMixin, TemplateView):
             'data_dishes': data_dishes,
             'labels_income': labels_income,
             'data_income': data_income,
+            'is_customer': getattr(user, 'role', None) == 'CUSTOMER',
         })
         return context

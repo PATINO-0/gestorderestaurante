@@ -2,102 +2,135 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<h2 class="mb-4 text-warning">Panel de administración</h2>
+{% if is_customer %}
+  <!-- Vista de inicio para CLIENTE -->
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card bg-card shadow-sm">
+        <div class="card-body text-center">
+          <h2 class="mb-3 text-warning">
+            ¡Bienvenido, {{ user.username }}! 👋
+          </h2>
+          <p class="mb-4">
+            Desde aquí puedes gestionar tus <strong>reservas</strong> y <strong>pedidos</strong>.
+          </p>
+          <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a href="{% url 'restaurant:reservation_list' %}" class="btn btn-warning btn-lg">
+              Reservar una mesa
+            </a>
+            <a href="{% url 'restaurant:order_list' %}" class="btn btn-outline-warning btn-lg">
+              Ver mis pedidos
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-md-4">
-    <div class="card bg-card shadow-sm">
-      <div class="card-body">
-        <h6 class="text-muted">Pedidos totales</h6>
-        <p class="display-6 text-warning">{{ total_orders }}</p>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card bg-card shadow-sm">
-      <div class="card-body">
-        <h6 class="text-muted">Reservas totales</h6>
-        <p class="display-6 text-warning">{{ total_reservations }}</p>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card bg-card shadow-sm">
-      <div class="card-body">
-        <h6 class="text-muted">Clientes registrados</h6>
-        <p class="display-6 text-warning">{{ total_customers }}</p>
-      </div>
-    </div>
-  </div>
-</div>
+{% else %}
+  <!-- Vista de panel para ADMIN / MESERO -->
+  <h2 class="mb-4 text-warning">Panel de administración</h2>
 
-<div class="row g-4">
-  <div class="col-md-6">
-    <div class="card bg-card shadow-sm">
-      <div class="card-body">
-        <h5 class="card-title text-warning">Top 5 platos más vendidos</h5>
-        <canvas id="topDishesChart" height="200"></canvas>
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card bg-card shadow-sm">
+        <div class="card-body">
+          <h6 class="text-muted">Pedidos totales</h6>
+          <p class="display-6 text-warning">{{ total_orders }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-card shadow-sm">
+        <div class="card-body">
+          <h6 class="text-muted">Reservas totales</h6>
+          <p class="display-6 text-warning">{{ total_reservations }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card bg-card shadow-sm">
+        <div class="card-body">
+          <h6 class="text-muted">Clientes registrados</h6>
+          <p class="display-6 text-warning">{{ total_customers }}</p>
+        </div>
       </div>
     </div>
   </div>
-  <div class="col-md-6">
-    <div class="card bg-card shadow-sm">
-      <div class="card-body">
-        <h5 class="card-title text-warning">Ingresos mensuales</h5>
-        <canvas id="monthlyIncomeChart" height="200"></canvas>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="card bg-card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title text-warning">Top 5 platos más vendidos</h5>
+          <canvas id="topDishesChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card bg-card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title text-warning">Ingresos mensuales</h5>
+          <canvas id="monthlyIncomeChart" height="200"></canvas>
+        </div>
       </div>
     </div>
   </div>
-</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
-{# Estos scripts solo contienen JSON, no JS, así el editor no se queja #}
-{{ labels_dishes|json_script:"labels-dishes-data" }}
-{{ data_dishes|json_script:"data-dishes-data" }}
-{{ labels_income|json_script:"labels-income-data" }}
-{{ data_income|json_script:"data-income-data" }}
+{% if not is_customer %}
+  {# Datos para las gráficas (solo si NO es cliente) #}
+  {{ labels_dishes|json_script:"labels-dishes-data" }}
+  {{ data_dishes|json_script:"data-dishes-data" }}
+  {{ labels_income|json_script:"labels-income-data" }}
+  {{ data_income|json_script:"data-income-data" }}
 
-<script>
-  // Leemos los datos JSON generados por Django
-  const labelsDishes = JSON.parse(
-    document.getElementById('labels-dishes-data').textContent
-  );
-  const dataDishes = JSON.parse(
-    document.getElementById('data-dishes-data').textContent
-  );
-  const labelsIncome = JSON.parse(
-    document.getElementById('labels-income-data').textContent
-  );
-  const dataIncome = JSON.parse(
-    document.getElementById('data-income-data').textContent
-  );
+  <script>
+    const labelsDishes = JSON.parse(
+      document.getElementById('labels-dishes-data').textContent
+    );
+    const dataDishes = JSON.parse(
+      document.getElementById('data-dishes-data').textContent
+    );
+    const labelsIncome = JSON.parse(
+      document.getElementById('labels-income-data').textContent
+    );
+    const dataIncome = JSON.parse(
+      document.getElementById('data-income-data').textContent
+    );
 
-  const ctxDishes = document.getElementById('topDishesChart');
-  new Chart(ctxDishes, {
-    type: 'bar',
-    data: {
-      labels: labelsDishes,
-      datasets: [{
-        label: 'Cantidad vendida',
-        data: dataDishes,
-      }]
-    },
-    options: { responsive: true }
-  });
+    const ctxDishes = document.getElementById('topDishesChart');
+    if (ctxDishes) {
+      new Chart(ctxDishes, {
+        type: 'bar',
+        data: {
+          labels: labelsDishes,
+          datasets: [{
+            label: 'Cantidad vendida',
+            data: dataDishes,
+          }]
+        },
+        options: { responsive: true }
+      });
+    }
 
-  const ctxIncome = document.getElementById('monthlyIncomeChart');
-  new Chart(ctxIncome, {
-    type: 'line',
-    data: {
-      labels: labelsIncome,
-      datasets: [{
-        label: 'Ingresos ($)',
-        data: dataIncome,
-        tension: 0.3,
-      }]
-    },
-    options: { responsive: true }
-  });
-</script>
+    const ctxIncome = document.getElementById('monthlyIncomeChart');
+    if (ctxIncome) {
+      new Chart(ctxIncome, {
+        type: 'line',
+        data: {
+          labels: labelsIncome,
+          datasets: [{
+            label: 'Ingresos ($)',
+            data: dataIncome,
+            tension: 0.3,
+          }]
+        },
+        options: { responsive: true }
+      });
+    }
+  </script>
+{% endif %}
 {% endblock %}

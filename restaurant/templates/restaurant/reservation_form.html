@@ -15,21 +15,25 @@
       <div class="mb-3">
         <label class="form-label">Mesa</label>
         {{ form.table }}
+        {{ form.table.errors }}
       </div>
 
       <div class="mb-3">
         <label class="form-label">Fecha</label>
         {{ form.date }}
+        {{ form.date.errors }}
       </div>
 
       <div class="mb-3">
         <label class="form-label">Hora</label>
         {{ form.time }}
+        {{ form.time.errors }}
       </div>
 
       <div class="mb-3">
         <label class="form-label">Número de personas</label>
         {{ form.guests }}
+        {{ form.guests.errors }}
       </div>
 
       <button type="submit" class="btn btn-warning">Guardar</button>

@@ -36,6 +36,12 @@ class OrderCreateView(RoleRequiredMixin, CreateView):
     success_url = reverse_lazy('restaurant:order_list')
     allowed_roles = ['ADMIN', 'WAITER', 'CUSTOMER']
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # Pasamos el usuario al formulario para controlar el status
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.request.POST:
@@ -76,6 +82,12 @@ class OrderUpdateView(RoleRequiredMixin, UpdateView):
     template_name = 'restaurant/order_form.html'
     success_url = reverse_lazy('restaurant:order_list')
     allowed_roles = ['ADMIN', 'WAITER']
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # Pasamos el usuario también aquí
+        kwargs['user'] = self.request.user
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

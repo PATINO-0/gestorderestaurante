@@ -15,7 +15,20 @@
       <div class="mb-3">
         <label class="form-label">Mesa</label>
         {{ form.table }}
+        {{ form.table.errors }}
       </div>
+
+      {# Estado del pedido: solo visible para ADMIN/WAITER #}
+      {% if user.role == 'ADMIN' or user.role == 'WAITER' %}
+        <div class="mb-3">
+          <label class="form-label">Estado del pedido</label>
+          {{ form.status }}
+          {{ form.status.errors }}
+        </div>
+      {% else %}
+        {# Para el cliente, el campo llega como hidden desde el formulario #}
+        {{ form.status }}
+      {% endif %}
 
       <hr class="text-secondary">
 
