@@ -1,0 +1,42 @@
+:root[data-theme='dark'] {
+  --bg-app: #050505;
+  --bg-card: #151515;
+  --bg-navbar: #000000;
+  --text-app: #f8f9fa;
+}
+
+:root[data-theme='light'] {
+  --bg-app: #f8f9fa;
+  --bg-card: #ffffff;
+  --bg-navbar: #343a40;
+  --text-app: #212529;
+}
+
+.bg-app {
+  background-color: var(--bg-app) !important;
+}
+
+.bg-card {
+  background-color: var(--bg-card) !important;
+}
+
+.bg-navbar {
+  background-color: var(--bg-navbar) !important;
+}
+
+.text-app {
+  color: var(--text-app) !important;
+}
+
+body {
+  min-height: 100vh;
+}
+
+/* Ajustes generales */
+.card {
+  border-radius: 0.75rem;
+}
+
+.navbar {
+  margin-bottom: 1rem;
+}

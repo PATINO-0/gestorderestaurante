@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Mesas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="text-warning">Mesas</h2>
+  {% if user.role == 'ADMIN' %}
+    <a href="{% url 'restaurant:table_create' %}" class="btn btn-warning">
+      Nueva mesa
+    </a>
+  {% endif %}
+</div>
+
+<div class="card bg-card shadow-sm">
+  <div class="card-body table-responsive">
+    <table class="table table-dark table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Número</th>
+          <th>Capacidad</th>
+          <th>Activa</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for table in tables %}
+          <tr>
+            <td>Mesa {{ table.number }}</td>
+            <td>{{ table.capacity }}</td>
+            <td>{{ table.is_active|yesno:"Sí,No" }}</td>
+            <td class="text-end">
+              {% if user.role == 'ADMIN' %}
+                <a href="{% url 'restaurant:table_edit' table.pk %}" class="btn btn-sm btn-outline-warning">
+                  Editar
+                </a>
+                <a href="{% url 'restaurant:table_delete' table.pk %}" class="btn btn-sm btn-outline-danger">
+                  Eliminar
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" class="text-center">
+              No hay mesas registradas.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

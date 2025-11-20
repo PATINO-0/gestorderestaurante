@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Mesa{% endblock %}
+
+{% block content %}
+<h2 class="mb-3 text-warning">
+  {% if object %}Editar mesa{% else %}Nueva mesa{% endif %}
+</h2>
+
+<div class="card bg-card shadow-sm">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="mb-3">
+        <label class="form-label">Número de mesa</label>
+        {{ form.number }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Capacidad</label>
+        {{ form.capacity }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Activa</label>
+        {{ form.is_active }}
+      </div>
+
+      <button type="submit" class="btn btn-warning">Guardar</button>
+      <a href="{% url 'restaurant:table_list' %}" class="btn btn-secondary ms-2">
+        Cancelar
+      </a>
+    </form>
+  </div>
+</div>
+{% endblock %}

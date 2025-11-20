@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Eliminar pedido{% endblock %}
+
+{% block content %}
+<h2 class="mb-3 text-danger">Eliminar pedido</h2>
+
+<p>
+  ¿Seguro que deseas eliminar el pedido
+  <strong>#{{ object.id }}</strong>
+  de la <strong>mesa {{ object.table.number }}</strong>?
+</p>
+
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-danger">Eliminar</button>
+  <a href="{% url 'restaurant:order_list' %}" class="btn btn-secondary ms-2">
+    Cancelar
+  </a>
+</form>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Pedido{% endblock %}
+
+{% block content %}
+<h2 class="mb-3 text-warning">
+  {% if object %}Editar pedido{% else %}Nuevo pedido{% endif %}
+</h2>
+
+<div class="card bg-card shadow-sm">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <div class="mb-3">
+        <label class="form-label">Mesa</label>
+        {{ form.table }}
+      </div>
+
+      <hr class="text-secondary">
+
+      <h5 class="text-warning mb-3">Platos del pedido</h5>
+
+      {{ items_formset.management_form }}
+      {% for f in items_formset %}
+        <div class="row align-items-end mb-2">
+          <div class="col-md-6">
+            <label class="form-label">Plato</label>
+            {{ f.dish }}
+            {{ f.dish.errors }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Cantidad</label>
+            {{ f.quantity }}
+            {{ f.quantity.errors }}
+          </div>
+          {% if f.DELETE %}
+            <div class="col-md-3">
+              <label class="form-label d-block">Eliminar</label>
+              {{ f.DELETE }}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <button type="submit" class="btn btn-warning">Guardar</button>
+      <a href="{% url 'restaurant:order_list' %}" class="btn btn-secondary ms-2">
+        Cancelar
+      </a>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Eliminar plato{% endblock %}
+{% block content %}
+<h2 class="mb-3 text-danger">Eliminar plato</h2>
+<p>¿Seguro que deseas eliminar el plato <strong>{{ object.name }}</strong>?</p>
+<form method="post">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-danger">Eliminar</button>
+  <a href="{% url 'restaurant:dish_list' %}" class="btn btn-secondary ms-2">Cancelar</a>
+</form>
+{% endblock %}
