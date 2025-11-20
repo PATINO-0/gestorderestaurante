@@ -18,7 +18,7 @@ class TableCreateView(RoleRequiredMixin, CreateView):
     form_class = TableForm
     template_name = 'restaurant/table_form.html'
     success_url = reverse_lazy('restaurant:table_list')
-    allowed_roles = ['ADMIN']
+    allowed_roles = ['ADMIN', 'WAITER']
 
 
 class TableUpdateView(RoleRequiredMixin, UpdateView):
@@ -26,11 +26,11 @@ class TableUpdateView(RoleRequiredMixin, UpdateView):
     form_class = TableForm
     template_name = 'restaurant/table_form.html'
     success_url = reverse_lazy('restaurant:table_list')
-    allowed_roles = ['ADMIN']
+    allowed_roles = ['ADMIN', 'WAITER']
 
 
 class TableDeleteView(RoleRequiredMixin, DeleteView):
     model = Table
     template_name = 'restaurant/table_confirm_delete.html'
     success_url = reverse_lazy('restaurant:table_list')
-    allowed_roles = ['ADMIN']
+    allowed_roles = ['ADMIN', 'WAITER']

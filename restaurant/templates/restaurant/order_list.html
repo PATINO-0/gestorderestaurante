@@ -54,8 +54,6 @@
                 <a href="{% url 'restaurant:order_edit' order.pk %}" class="btn btn-sm btn-outline-warning">
                   Editar
                 </a>
-              {% endif %}
-              {% if user.role == 'ADMIN' %}
                 <a href="{% url 'restaurant:order_delete' order.pk %}" class="btn btn-sm btn-outline-danger">
                   Eliminar
                 </a>

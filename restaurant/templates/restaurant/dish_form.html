@@ -1,31 +1,706 @@
 {% extends 'base.html' %}
-{% block title %}Plato{% endblock %}
+{% block title %}{% if form.instance.pk %}Editar plato{% else %}Crear plato{% endif %}{% endblock %}
+
 {% block content %}
-<h2 class="mb-3 text-warning">Plato</h2>
-<div class="card bg-card shadow-sm">
-  <div class="card-body">
-    <form method="post">
+<style>
+  /* Container del Formulario */
+  .form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    animation: fadeInUp 0.6s ease;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Header del Formulario */
+  .form-header {
+    margin-bottom: 2rem;
+    animation: slideInLeft 0.6s ease;
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .form-title {
+    font-size: 2rem;
+    font-weight: 700;
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+  }
+
+  /* Card del Formulario */
+  .form-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .form-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 70% 30%, rgba(247, 151, 30, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    animation: rotateGlow 25s linear infinite;
+  }
+
+  @keyframes rotateGlow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Form Groups */
+  .form-group-custom {
+    margin-bottom: 1.75rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .form-label-custom {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    transition: color 0.3s ease;
+  }
+
+  .form-label-custom.required::after {
+    content: '*';
+    color: #ff3b30;
+    margin-left: 0.25rem;
+  }
+
+  /* Input Fields */
+  .form-input-custom,
+  .form-textarea-custom,
+  .form-select-custom {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    background: var(--glass-bg);
+    border: 1.5px solid var(--glass-border);
+    border-radius: 14px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    font-family: inherit;
+  }
+
+  .form-input-custom:focus,
+  .form-textarea-custom:focus,
+  .form-select-custom:focus {
+    outline: none;
+    border-color: rgba(247, 151, 30, 0.6);
+    box-shadow: 0 0 0 4px rgba(247, 151, 30, 0.1);
+    transform: translateY(-2px);
+    background: var(--bg-secondary);
+  }
+
+  .form-textarea-custom {
+    min-height: 120px;
+    resize: vertical;
+    font-family: inherit;
+  }
+
+  /* Multi-Select Mejorado */
+  .form-select-custom {
+    height: auto;
+    min-height: 120px;
+    cursor: pointer;
+  }
+
+  .form-select-custom option {
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-radius: 8px;
+    margin: 0.25rem 0;
+  }
+
+  .form-select-custom option:checked {
+    background: linear-gradient(135deg, rgba(247, 151, 30, 0.3), rgba(255, 210, 0, 0.3));
+    font-weight: 600;
+  }
+
+  /* Helper Text */
+  .form-helper-text {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: 0.5rem 0.75rem;
+    background: rgba(102, 126, 234, 0.05);
+    border-left: 3px solid rgba(102, 126, 234, 0.4);
+    border-radius: 6px;
+  }
+
+  .form-helper-text::before {
+    content: 'ℹ️';
+    font-size: 1rem;
+  }
+
+  /* Toggle Switch para is_active */
+  .toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+  }
+
+  .toggle-switch input[type="checkbox"] {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--glass-border);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 34px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .toggle-slider::before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background: white;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .toggle-switch input:checked + .toggle-slider {
+    background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+  }
+
+  .toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(26px);
+  }
+
+  .toggle-switch input:focus + .toggle-slider {
+    box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.2);
+  }
+
+  .toggle-label {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    transition: color 0.3s ease;
+  }
+
+  .toggle-switch input:checked ~ .toggle-label {
+    color: #34c759;
+    font-weight: 600;
+  }
+
+  /* Selected Pills para Multi-Select */
+  .selected-items-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: var(--glass-bg);
+    border-radius: 12px;
+    min-height: 50px;
+    border: 1px dashed var(--glass-border);
+  }
+
+  .selected-item-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, rgba(247, 151, 30, 0.2), rgba(255, 210, 0, 0.2));
+    border: 1px solid rgba(247, 151, 30, 0.3);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    animation: pillIn 0.3s ease;
+  }
+
+  @keyframes pillIn {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Error Messages */
+  .error-message-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    border-left: 3px solid #ff3b30;
+    border-radius: 10px;
+    color: #ff3b30;
+    font-size: 0.9rem;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .error-message-field::before {
+    content: '⚠️';
+    font-size: 1.1rem;
+  }
+
+  /* Botones de Acción */
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .btn-submit-form {
+    flex: 1;
+    padding: 1rem 2rem;
+    background: var(--gold-gradient);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(247, 151, 30, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-submit-form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .btn-submit-form:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(247, 151, 30, 0.4);
+  }
+
+  .btn-submit-form:hover::before {
+    left: 100%;
+  }
+
+  .btn-cancel-form {
+    flex: 1;
+    padding: 1rem 2rem;
+    background: transparent;
+    border: 2px solid var(--glass-border);
+    border-radius: 14px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-cancel-form:hover {
+    background: var(--glass-bg);
+    border-color: rgba(102, 126, 234, 0.5);
+    transform: translateY(-2px);
+    color: var(--text-primary);
+  }
+
+  /* Loading State */
+  .btn-submit-form.loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .btn-submit-form.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin-left: -10px;
+    margin-top: -10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .form-card {
+      padding: 2rem 1.5rem;
+    }
+
+    .form-title {
+      font-size: 1.75rem;
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+
+    .btn-submit-form,
+    .btn-cancel-form {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .form-card {
+      padding: 1.5rem 1rem;
+      border-radius: 20px;
+    }
+
+    .form-input-custom,
+    .form-textarea-custom,
+    .form-select-custom {
+      font-size: 16px; /* Previene zoom en iOS */
+    }
+  }
+
+  /* Animación de Focus */
+  .form-group-custom:focus-within .form-label-custom {
+    color: rgba(247, 151, 30, 0.9);
+  }
+</style>
+
+<div class="form-container">
+  <!-- Header -->
+  <div class="form-header">
+    <h1 class="form-title">
+      {% if form.instance.pk %}
+        ✏️ Editar Plato
+      {% else %}
+        ➕ Nuevo Plato
+      {% endif %}
+    </h1>
+    <p class="form-subtitle">
+      Completa la información del plato para tu menú
+    </p>
+  </div>
+
+  <!-- Form Card -->
+  <div class="form-card">
+    <form method="post" id="dishForm">
       {% csrf_token %}
-      {{ form.non_field_errors }}
-      <div class="mb-3">
-        <label class="form-label">Nombre</label>
-        {{ form.name }}
+      
+      <!-- Errores Generales -->
+      {% if form.non_field_errors %}
+        <div class="error-message-field" style="margin-bottom: 1.5rem;">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <!-- Nombre -->
+      <div class="form-group-custom">
+        <label for="{{ form.name.id_for_label }}" class="form-label-custom required">
+          Nombre del plato
+        </label>
+        <input 
+          type="text" 
+          name="{{ form.name.name }}" 
+          id="{{ form.name.id_for_label }}"
+          class="form-input-custom"
+          placeholder="Ej: Pasta Carbonara"
+          {% if form.name.value %}value="{{ form.name.value }}"{% endif %}
+          required
+        >
+        {% if form.name.errors %}
+          <div class="error-message-field">
+            {{ form.name.errors.0 }}
+          </div>
+        {% endif %}
       </div>
-      <div class="mb-3">
-        <label class="form-label">Descripción</label>
-        {{ form.description }}
+
+      <!-- Descripción -->
+      <div class="form-group-custom">
+        <label for="{{ form.description.id_for_label }}" class="form-label-custom">
+          Descripción
+        </label>
+        <textarea 
+          name="{{ form.description.name }}" 
+          id="{{ form.description.id_for_label }}"
+          class="form-textarea-custom"
+          placeholder="Describe los ingredientes y características del plato..."
+        >{% if form.description.value %}{{ form.description.value }}{% endif %}</textarea>
+        {% if form.description.errors %}
+          <div class="error-message-field">
+            {{ form.description.errors.0 }}
+          </div>
+        {% endif %}
       </div>
-      <div class="mb-3">
-        <label class="form-label">Precio</label>
-        {{ form.price }}
+
+      <!-- Precio -->
+      <div class="form-group-custom">
+        <label for="{{ form.price.id_for_label }}" class="form-label-custom required">
+          Precio
+        </label>
+        <input 
+          type="number" 
+          step="0.01"
+          name="{{ form.price.name }}" 
+          id="{{ form.price.id_for_label }}"
+          class="form-input-custom"
+          placeholder="0.00"
+          {% if form.price.value %}value="{{ form.price.value }}"{% endif %}
+          required
+        >
+        {% if form.price.errors %}
+          <div class="error-message-field">
+            {{ form.price.errors.0 }}
+          </div>
+        {% endif %}
       </div>
-      <div class="mb-3">
-        <label class="form-label">Activo</label>
-        {{ form.is_active }}
+
+      <!-- Estado Activo (Toggle Switch) -->
+      <div class="form-group-custom">
+        <label class="form-label-custom">
+          Estado del plato
+        </label>
+        <div class="toggle-wrapper">
+          <label class="toggle-switch">
+            <input 
+              type="checkbox" 
+              name="{{ form.is_active.name }}" 
+              id="{{ form.is_active.id_for_label }}"
+              {% if form.is_active.value %}checked{% endif %}
+            >
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label">
+            <span id="toggleText">{% if form.is_active.value %}Plato activo{% else %}Plato inactivo{% endif %}</span>
+          </span>
+        </div>
+        {% if form.is_active.errors %}
+          <div class="error-message-field">
+            {{ form.is_active.errors.0 }}
+          </div>
+        {% endif %}
       </div>
-      <button type="submit" class="btn btn-warning">Guardar</button>
-      <a href="{% url 'restaurant:dish_list' %}" class="btn btn-secondary ms-2">Cancelar</a>
+
+      <!-- Ingredientes (Multi-Select) -->
+      <div class="form-group-custom">
+        <label for="{{ form.ingredients.id_for_label }}" class="form-label-custom">
+          Ingredientes
+        </label>
+        <select 
+          name="{{ form.ingredients.name }}" 
+          id="{{ form.ingredients.id_for_label }}"
+          class="form-select-custom"
+          multiple
+        >
+          {% for value, label in form.ingredients.field.choices %}
+            <option value="{{ value }}" {% if value in form.ingredients.value %}selected{% endif %}>
+              {{ label }}
+            </option>
+          {% endfor %}
+        </select>
+        
+        <div class="form-helper-text">
+          Mantén presionada la tecla <strong>Ctrl</strong> (o <strong>Cmd</strong> en Mac) para seleccionar varios ingredientes.
+        </div>
+        
+        <!-- Pills de seleccionados -->
+        <div class="selected-items-container" id="selectedIngredientsContainer">
+          <span style="color: var(--text-secondary); font-size: 0.9rem;">
+            Los ingredientes seleccionados aparecerán aquí
+          </span>
+        </div>
+        
+        {% if form.ingredients.errors %}
+          <div class="error-message-field">
+            {{ form.ingredients.errors.0 }}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Botones -->
+      <div class="form-actions">
+        <a href="{% url 'restaurant:dish_list' %}" class="btn-cancel-form">
+          Cancelar
+        </a>
+        <button type="submit" class="btn-submit-form" id="submitBtn">
+          {% if form.instance.pk %}
+            Actualizar plato
+          {% else %}
+            Crear plato
+          {% endif %}
+        </button>
+      </div>
     </form>
   </div>
 </div>
+
+<script>
+  // Toggle Switch Text Update
+  const toggleCheckbox = document.getElementById('{{ form.is_active.id_for_label }}');
+  const toggleText = document.getElementById('toggleText');
+  
+  if (toggleCheckbox && toggleText) {
+    toggleCheckbox.addEventListener('change', function() {
+      toggleText.textContent = this.checked ? 'Plato activo' : 'Plato inactivo';
+    });
+  }
+
+  // Multi-Select Visual Feedback
+  const ingredientsSelect = document.getElementById('{{ form.ingredients.id_for_label }}');
+  const selectedContainer = document.getElementById('selectedIngredientsContainer');
+  
+  function updateSelectedPills() {
+    const selectedOptions = Array.from(ingredientsSelect.selectedOptions);
+    
+    if (selectedOptions.length === 0) {
+      selectedContainer.innerHTML = '<span style="color: var(--text-secondary); font-size: 0.9rem;">Los ingredientes seleccionados aparecerán aquí</span>';
+      return;
+    }
+    
+    selectedContainer.innerHTML = selectedOptions.map(option => `
+      <span class="selected-item-pill">
+        🥘 ${option.text}
+      </span>
+    `).join('');
+  }
+  
+  if (ingredientsSelect) {
+    ingredientsSelect.addEventListener('change', updateSelectedPills);
+    // Inicializar al cargar
+    updateSelectedPills();
+  }
+
+  // Form Submit Loading State
+  document.getElementById('dishForm').addEventListener('submit', function() {
+    const btn = document.getElementById('submitBtn');
+    btn.classList.add('loading');
+    btn.textContent = '';
+  });
+
+  // Auto-resize Textarea
+  const textarea = document.querySelector('.form-textarea-custom');
+  if (textarea) {
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+  }
+
+  // Animación de Entrada de Campos
+  document.addEventListener('DOMContentLoaded', function() {
+    const formGroups = document.querySelectorAll('.form-group-custom');
+    formGroups.forEach((group, index) => {
+      group.style.opacity = '0';
+      group.style.transform = 'translateY(20px)';
+      
+      setTimeout(() => {
+        group.style.transition = 'all 0.5s ease';
+        group.style.opacity = '1';
+        group.style.transform = 'translateY(0)';
+      }, 100 + (index * 50));
+    });
+  });
+
+  // Prevenir pérdida de datos
+  let formModified = false;
+  const formInputs = document.querySelectorAll('input, textarea, select');
+  
+  formInputs.forEach(input => {
+    input.addEventListener('change', () => {
+      formModified = true;
+    });
+  });
+
+  window.addEventListener('beforeunload', function(e) {
+    if (formModified) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  document.getElementById('dishForm').addEventListener('submit', function() {
+    formModified = false;
+  });
+</script>
 {% endblock %}

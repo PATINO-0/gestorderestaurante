@@ -32,4 +32,4 @@ class DishDeleteView(RoleRequiredMixin, DeleteView):
     model = Dish
     template_name = 'restaurant/dish_confirm_delete.html'
     success_url = reverse_lazy('restaurant:dish_list')
-    allowed_roles = ['ADMIN']
+    allowed_roles = ['ADMIN', 'WAITER' ]

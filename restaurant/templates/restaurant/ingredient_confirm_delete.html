@@ -1,0 +1,383 @@
+{% extends 'base.html' %}
+{% block title %}Eliminar ingrediente{% endblock %}
+
+{% block content %}
+<style>
+  /* Container de Confirmación */
+  .delete-confirmation-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    position: relative;
+  }
+
+  /* Card de Confirmación */
+  .delete-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border: 1px solid rgba(255, 59, 48, 0.2);
+    border-radius: 24px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 8px 32px rgba(255, 59, 48, 0.15);
+    width: 100%;
+    max-width: 500px;
+    animation: scaleInWarning 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  @keyframes scaleInWarning {
+    0% {
+      opacity: 0;
+      transform: scale(0.9) translateY(20px);
+    }
+    60% {
+      transform: scale(1.02);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  /* Efecto de Alerta en el Fondo */
+  .delete-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 50% 50%, rgba(255, 59, 48, 0.08) 0%, transparent 70%);
+    animation: pulseWarning 3s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes pulseWarning {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+  }
+
+  /* Icono de Advertencia */
+  .warning-icon-container {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .warning-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, #ff3b30 0%, #ff6b6b 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    animation: iconBounce 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 16px rgba(255, 59, 48, 0.3);
+  }
+
+  @keyframes iconBounce {
+    0% {
+      transform: scale(0) rotate(-45deg);
+      opacity: 0;
+    }
+    60% {
+      transform: scale(1.1) rotate(5deg);
+    }
+    100% {
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  /* Título de Confirmación */
+  .delete-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Mensaje de Confirmación */
+  .delete-message {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Item a Eliminar */
+  .delete-item-highlight {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    border-radius: 8px;
+    font-weight: 700;
+    color: #ff3b30;
+    margin: 0 0.25rem;
+  }
+
+  /* Warning Box */
+  .warning-box {
+    background: rgba(255, 149, 0, 0.1);
+    border: 1px solid rgba(255, 149, 0, 0.3);
+    border-left: 4px solid #ff9500;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .warning-box-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #ff9500;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .warning-box-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  /* Botones de Acción */
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Botón de Eliminar (Destructivo) */
+  .btn-delete-destructive {
+    flex: 1;
+    padding: 1rem;
+    background: linear-gradient(135deg, #ff3b30 0%, #ff6b6b 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
+  }
+
+  .btn-delete-destructive::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .btn-delete-destructive:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 59, 48, 0.4);
+  }
+
+  .btn-delete-destructive:hover::before {
+    left: 100%;
+  }
+
+  .btn-delete-destructive:active {
+    transform: translateY(0);
+  }
+
+  /* Botón de Cancelar (Seguro) */
+  .btn-cancel-safe {
+    flex: 1;
+    padding: 1rem;
+    background: var(--glass-bg);
+    border: 2px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+  }
+
+  .btn-cancel-safe:hover {
+    background: var(--glass-bg);
+    border-color: rgba(102, 126, 234, 0.5);
+    transform: translateY(-2px);
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Loading State */
+  .btn-delete-destructive.loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .btn-delete-destructive.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin-left: -10px;
+    margin-top: -10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Responsive */
+  @media (max-width: 576px) {
+    .delete-card {
+      padding: 2rem 1.5rem;
+      border-radius: 20px;
+    }
+
+    .warning-icon {
+      width: 70px;
+      height: 70px;
+      font-size: 2.5rem;
+    }
+
+    .delete-title {
+      font-size: 1.5rem;
+    }
+
+    .delete-message {
+      font-size: 1rem;
+    }
+
+    .action-buttons {
+      flex-direction: column-reverse;
+    }
+
+    .btn-delete-destructive,
+    .btn-cancel-safe {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .delete-confirmation-container {
+      padding: 1rem 0.5rem;
+    }
+
+    .delete-card {
+      padding: 1.5rem 1rem;
+    }
+  }
+
+  /* Accesibilidad */
+  .btn-delete-destructive:focus,
+  .btn-cancel-safe:focus {
+    outline: 3px solid rgba(102, 126, 234, 0.5);
+    outline-offset: 2px;
+  }
+</style>
+
+<div class="delete-confirmation-container">
+  <div class="delete-card">
+    <!-- Icono de Advertencia -->
+    <div class="warning-icon-container">
+      <div class="warning-icon">⚠️</div>
+    </div>
+
+    <!-- Título -->
+    <h1 class="delete-title">¿Eliminar este ingrediente?</h1>
+
+    <!-- Mensaje -->
+    <p class="delete-message">
+      Estás a punto de eliminar permanentemente el ingrediente
+      <span class="delete-item-highlight">{{ object.name }}</span>
+    </p>
+
+    <!-- Warning Box -->
+    <div class="warning-box">
+      <div class="warning-box-title">
+        <span>⚡</span>
+        <span>Acción irreversible</span>
+      </div>
+      <p class="warning-box-text">
+        Esta acción no se puede deshacer. Si el ingrediente está asociado a algún plato, no podrá eliminarse.
+      </p>
+    </div>
+
+    <!-- Formulario -->
+    <form method="post" id="deleteForm">
+      {% csrf_token %}
+      
+      <div class="action-buttons">
+        <a href="{% url 'restaurant:ingredient_list' %}" class="btn-cancel-safe">
+          Cancelar
+        </a>
+        
+        <button type="submit" class="btn-delete-destructive" id="deleteBtn">
+          Eliminar ingrediente
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  // Prevenir doble clic
+  document.getElementById('deleteForm').addEventListener('submit', function(e) {
+    const btn = document.getElementById('deleteBtn');
+    
+    if (btn.classList.contains('loading')) {
+      e.preventDefault();
+      return false;
+    }
+    
+    btn.classList.add('loading');
+    btn.textContent = '';
+  });
+
+  // ESC para cancelar
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      window.location.href = "{% url 'restaurant:ingredient_list' %}";
+    }
+  });
+
+  // Focus en cancelar por defecto
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelector('.btn-cancel-safe').focus();
+  });
+</script>
+{% endblock %}

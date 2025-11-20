@@ -2,81 +2,444 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-{% if is_customer %}
-  <!-- Vista de inicio para CLIENTE -->
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="card bg-card shadow-sm">
-        <div class="card-body text-center">
-          <h2 class="mb-3 text-warning">
+<style>
+  /* Dashboard Container */
+  .dashboard-container {
+    animation: fadeInUp 0.6s ease;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Welcome Card para Cliente */
+  .welcome-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 3rem 2rem;
+    box-shadow: var(--shadow-lg);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: scaleIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .welcome-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 50% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+    animation: rotateGlow 20s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes rotateGlow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .welcome-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    z-index: 1;
+  }
+
+  .welcome-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .welcome-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Botones de Acción */
+  .action-btn-primary {
+    padding: 1rem 2rem;
+    background: var(--primary-gradient);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+
+  .action-btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    color: white;
+  }
+
+  .action-btn-secondary {
+    padding: 1rem 2rem;
+    background: transparent;
+    border: 2px solid var(--glass-border);
+    border-radius: 14px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .action-btn-secondary:hover {
+    background: var(--glass-bg);
+    border-color: rgba(102, 126, 234, 0.5);
+    transform: translateY(-3px);
+    color: var(--text-primary);
+  }
+
+  /* Dashboard Header */
+  .dashboard-header {
+    margin-bottom: 2rem;
+    animation: slideInLeft 0.6s ease;
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .dashboard-title {
+    font-size: 2rem;
+    font-weight: 700;
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Stats Cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 1.75rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease;
+    animation-fill-mode: both;
+  }
+
+  .stat-card:nth-child(1) { animation-delay: 0.1s; }
+  .stat-card:nth-child(2) { animation-delay: 0.2s; }
+  .stat-card:nth-child(3) { animation-delay: 0.3s; }
+
+  .stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(102, 126, 234, 0.3);
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--primary-gradient);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .stat-card:hover::before {
+    opacity: 1;
+  }
+
+  .stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .stat-icon {
+    font-size: 2rem;
+    opacity: 0.5;
+  }
+
+  /* Charts Grid */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .chart-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 1.75rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeInUp 0.6s ease;
+    animation-fill-mode: both;
+  }
+
+  .chart-card:nth-child(1) { animation-delay: 0.4s; }
+  .chart-card:nth-child(2) { animation-delay: 0.5s; }
+
+  .chart-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .chart-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .chart-icon {
+    font-size: 1.5rem;
+  }
+
+  /* Canvas Container */
+  .chart-canvas-container {
+    position: relative;
+    height: 280px;
+    width: 100%;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .welcome-title {
+      font-size: 2rem;
+    }
+
+    .welcome-subtitle {
+      font-size: 1rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .charts-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .chart-canvas-container {
+      height: 250px;
+    }
+
+    .action-btn-primary,
+    .action-btn-secondary {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .welcome-card {
+      padding: 2rem 1.5rem;
+    }
+
+    .stat-card {
+      padding: 1.5rem;
+    }
+
+    .chart-card {
+      padding: 1.5rem;
+    }
+  }
+
+  /* Loading Animation para Charts */
+  .chart-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 280px;
+  }
+
+  .chart-loading::after {
+    content: '';
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--glass-border);
+    border-top-color: rgba(102, 126, 234, 0.8);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+
+<div class="dashboard-container">
+  {% if is_customer %}
+    <!-- Vista de inicio para CLIENTE -->
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-10 col-xl-8">
+        <div class="welcome-card">
+          <h1 class="welcome-title">
             ¡Bienvenido, {{ user.username }}! 👋
-          </h2>
-          <p class="mb-4">
-            Desde aquí puedes gestionar tus <strong>reservas</strong> y <strong>pedidos</strong>.
+          </h1>
+          <p class="welcome-subtitle">
+            Desde aquí puedes gestionar tus <strong>reservas</strong> y <strong>pedidos</strong> de manera fácil y rápida.
           </p>
-          <div class="d-flex flex-wrap justify-content-center gap-3">
-            <a href="{% url 'restaurant:reservation_list' %}" class="btn btn-warning btn-lg">
+          <div class="welcome-actions">
+            <a href="{% url 'restaurant:reservation_list' %}" class="action-btn-primary">
+              <span>📅</span>
               Reservar una mesa
             </a>
-            <a href="{% url 'restaurant:order_list' %}" class="btn btn-outline-warning btn-lg">
+            <a href="{% url 'restaurant:order_list' %}" class="action-btn-secondary">
+              <span>🍽️</span>
               Ver mis pedidos
             </a>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-{% else %}
-  <!-- Vista de panel para ADMIN / MESERO -->
-  <h2 class="mb-4 text-warning">Panel de administración</h2>
+  {% else %}
+    <!-- Vista de panel para ADMIN / MESERO -->
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Panel de administración</h1>
+    </div>
 
-  <div class="row g-3 mb-4">
-    <div class="col-md-4">
-      <div class="card bg-card shadow-sm">
-        <div class="card-body">
-          <h6 class="text-muted">Pedidos totales</h6>
-          <p class="display-6 text-warning">{{ total_orders }}</p>
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Pedidos totales</div>
+        <div class="stat-value">
+          <span class="stat-icon">📦</span>
+          {{ total_orders }}
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-label">Reservas totales</div>
+        <div class="stat-value">
+          <span class="stat-icon">📅</span>
+          {{ total_reservations }}
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-label">Clientes registrados</div>
+        <div class="stat-value">
+          <span class="stat-icon">👥</span>
+          {{ total_customers }}
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="card bg-card shadow-sm">
-        <div class="card-body">
-          <h6 class="text-muted">Reservas totales</h6>
-          <p class="display-6 text-warning">{{ total_reservations }}</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card bg-card shadow-sm">
-        <div class="card-body">
-          <h6 class="text-muted">Clientes registrados</h6>
-          <p class="display-6 text-warning">{{ total_customers }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="row g-4">
-    <div class="col-md-6">
-      <div class="card bg-card shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title text-warning">Top 5 platos más vendidos</h5>
-          <canvas id="topDishesChart" height="200"></canvas>
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h5 class="chart-title">
+          <span class="chart-icon">📊</span>
+          Top 5 platos más vendidos
+        </h5>
+        <div class="chart-canvas-container">
+          <canvas id="topDishesChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="chart-card">
+        <h5 class="chart-title">
+          <span class="chart-icon">💰</span>
+          Ingresos mensuales
+        </h5>
+        <div class="chart-canvas-container">
+          <canvas id="monthlyIncomeChart"></canvas>
         </div>
       </div>
     </div>
-    <div class="col-md-6">
-      <div class="card bg-card shadow-sm">
-        <div class="card-body">
-          <h5 class="card-title text-warning">Ingresos mensuales</h5>
-          <canvas id="monthlyIncomeChart" height="200"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-{% endif %}
+  {% endif %}
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -88,6 +451,71 @@
   {{ data_income|json_script:"data-income-data" }}
 
   <script>
+    // Tema de colores para charts
+    const chartColors = {
+      primary: 'rgba(102, 126, 234, 1)',
+      primaryLight: 'rgba(102, 126, 234, 0.8)',
+      primaryLighter: 'rgba(102, 126, 234, 0.1)',
+      gradient1: 'rgba(102, 126, 234, 1)',
+      gradient2: 'rgba(118, 75, 162, 1)',
+      accent: 'rgba(245, 87, 108, 1)',
+      accentLight: 'rgba(245, 87, 108, 0.8)',
+      text: getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+      textSecondary: getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim(),
+      gridLines: 'rgba(255, 255, 255, 0.1)',
+    };
+
+    // Configuración común para todos los charts
+    const commonOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          padding: 12,
+          borderRadius: 8,
+          titleFont: {
+            size: 14,
+            weight: '600'
+          },
+          bodyFont: {
+            size: 13
+          },
+          displayColors: false
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            display: false,
+            drawBorder: false
+          },
+          ticks: {
+            color: chartColors.textSecondary,
+            font: {
+              size: 12
+            }
+          }
+        },
+        y: {
+          grid: {
+            color: chartColors.gridLines,
+            drawBorder: false
+          },
+          ticks: {
+            color: chartColors.textSecondary,
+            font: {
+              size: 12
+            }
+          }
+        }
+      }
+    };
+
+    // Parsear datos
     const labelsDishes = JSON.parse(
       document.getElementById('labels-dishes-data').textContent
     );
@@ -101,8 +529,14 @@
       document.getElementById('data-income-data').textContent
     );
 
+    // Chart de Platos (Bar Chart)
     const ctxDishes = document.getElementById('topDishesChart');
     if (ctxDishes) {
+      // Crear gradiente para las barras
+      const gradient = ctxDishes.getContext('2d').createLinearGradient(0, 0, 0, 400);
+      gradient.addColorStop(0, chartColors.gradient1);
+      gradient.addColorStop(1, chartColors.gradient2);
+
       new Chart(ctxDishes, {
         type: 'bar',
         data: {
@@ -110,27 +544,106 @@
           datasets: [{
             label: 'Cantidad vendida',
             data: dataDishes,
+            backgroundColor: gradient,
+            borderRadius: 8,
+            borderSkipped: false,
           }]
         },
-        options: { responsive: true }
+        options: {
+          ...commonOptions,
+          plugins: {
+            ...commonOptions.plugins,
+            tooltip: {
+              ...commonOptions.plugins.tooltip,
+              callbacks: {
+                label: function(context) {
+                  return `Vendidos: ${context.parsed.y}`;
+                }
+              }
+            }
+          }
+        }
       });
     }
 
+    // Chart de Ingresos (Line Chart)
     const ctxIncome = document.getElementById('monthlyIncomeChart');
     if (ctxIncome) {
+      // Crear gradiente para el área bajo la línea
+      const gradient = ctxIncome.getContext('2d').createLinearGradient(0, 0, 0, 400);
+      gradient.addColorStop(0, 'rgba(245, 87, 108, 0.3)');
+      gradient.addColorStop(1, 'rgba(245, 87, 108, 0.0)');
+
       new Chart(ctxIncome, {
         type: 'line',
         data: {
           labels: labelsIncome,
           datasets: [{
-            label: 'Ingresos ($)',
+            label: 'Ingresos',
             data: dataIncome,
-            tension: 0.3,
+            borderColor: chartColors.accent,
+            backgroundColor: gradient,
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true,
+            pointRadius: 5,
+            pointHoverRadius: 7,
+            pointBackgroundColor: chartColors.accent,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            pointHoverBackgroundColor: chartColors.accent,
+            pointHoverBorderColor: '#fff',
+            pointHoverBorderWidth: 3,
           }]
         },
-        options: { responsive: true }
+        options: {
+          ...commonOptions,
+          plugins: {
+            ...commonOptions.plugins,
+            tooltip: {
+              ...commonOptions.plugins.tooltip,
+              callbacks: {
+                label: function(context) {
+                  return `Ingresos: $${context.parsed.y.toLocaleString()}`;
+                }
+              }
+            }
+          }
+        }
       });
     }
+
+    // Animación de números al cargar
+    function animateValue(element, start, end, duration) {
+      let startTimestamp = null;
+      const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        const value = Math.floor(progress * (end - start) + start);
+        element.textContent = value.toLocaleString();
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        }
+      };
+      window.requestAnimationFrame(step);
+    }
+
+    // Animar valores de estadísticas
+    document.addEventListener('DOMContentLoaded', function() {
+      const statValues = document.querySelectorAll('.stat-value');
+      statValues.forEach((stat, index) => {
+        const textNode = Array.from(stat.childNodes).find(node => node.nodeType === Node.TEXT_NODE);
+        if (textNode) {
+          const finalValue = parseInt(textNode.textContent.trim().replace(/,/g, ''));
+          if (!isNaN(finalValue)) {
+            textNode.textContent = '0';
+            setTimeout(() => {
+              animateValue(textNode, 0, finalValue, 1500);
+            }, 200 + (index * 150));
+          }
+        }
+      });
+    });
   </script>
 {% endif %}
 {% endblock %}

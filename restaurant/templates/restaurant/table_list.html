@@ -4,7 +4,7 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2 class="text-warning">Mesas</h2>
-  {% if user.role == 'ADMIN' %}
+  {% if user.role == 'ADMIN' or user.role == 'WAITER' %}
     <a href="{% url 'restaurant:table_create' %}" class="btn btn-warning">
       Nueva mesa
     </a>
@@ -29,7 +29,7 @@
             <td>{{ table.capacity }}</td>
             <td>{{ table.is_active|yesno:"Sí,No" }}</td>
             <td class="text-end">
-              {% if user.role == 'ADMIN' %}
+              {% if user.role == 'ADMIN' or user.role == 'WAITER' %}
                 <a href="{% url 'restaurant:table_edit' table.pk %}" class="btn btn-sm btn-outline-warning">
                   Editar
                 </a>

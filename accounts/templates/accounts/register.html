@@ -1,38 +1,692 @@
 {% extends 'base.html' %}
 {% block title %}Registrarse{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-5">
-    <div class="card shadow bg-card text-app">
-      <div class="card-body">
-        <h5 class="card-title mb-3 text-center text-warning">Crear cuenta</h5>
-        <form method="post">
-          {% csrf_token %}
-          {{ form.non_field_errors }}
-          <div class="mb-3">
-            <label class="form-label">Usuario</label>
-            {{ form.username }}
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Correo electrónico</label>
-            {{ form.email }}
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Rol</label>
-            {{ form.role }}
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Contraseña</label>
-            {{ form.password1 }}
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Confirmar contraseña</label>
-            {{ form.password2 }}
-          </div>
-          <button type="submit" class="btn btn-warning w-100">Registrar</button>
-        </form>
+<style>
+  /* Container de Registro */
+  .register-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    position: relative;
+  }
+
+  /* Card de Registro */
+  .register-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 3rem 2.5rem;
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 520px;
+    animation: fadeInScale 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  /* Efecto de Gradiente en el Fondo */
+  .register-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 70% 30%, rgba(245, 87, 108, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    animation: rotateGradient 20s linear infinite;
+  }
+
+  @keyframes rotateGradient {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Título */
+  .register-title {
+    font-size: 2rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    z-index: 1;
+  }
+
+  .register-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Form Groups */
+  .form-group-register {
+    margin-bottom: 1.25rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .form-label-register {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+  }
+
+  /* Input Fields */
+  .form-input-register {
+    width: 100%;
+    padding: 0.95rem 1.25rem;
+    background: var(--glass-bg);
+    border: 1.5px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+  }
+
+  .form-input-register:focus {
+    outline: none;
+    border-color: rgba(245, 87, 108, 0.5);
+    box-shadow: 0 0 0 4px rgba(245, 87, 108, 0.1);
+    transform: translateY(-2px);
+  }
+
+  .form-input-register::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+  }
+
+  /* Select Dropdown */
+  .form-select-register {
+    width: 100%;
+    padding: 0.95rem 1.25rem;
+    background: var(--glass-bg);
+    border: 1.5px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 3rem;
+  }
+
+  .form-select-register:focus {
+    outline: none;
+    border-color: rgba(245, 87, 108, 0.5);
+    box-shadow: 0 0 0 4px rgba(245, 87, 108, 0.1);
+    transform: translateY(-2px);
+  }
+
+  /* Input con Icono */
+  .input-wrapper-register {
+    position: relative;
+  }
+
+  .input-icon-register {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    pointer-events: none;
+    transition: color 0.3s ease;
+  }
+
+  .input-wrapper-register .form-input-register,
+  .input-wrapper-register .form-select-register {
+    padding-left: 3rem;
+  }
+
+  .input-wrapper-register:focus-within .input-icon-register {
+    color: rgba(245, 87, 108, 0.8);
+  }
+
+  /* Toggle Password Visibility */
+  .password-toggle {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    transition: all 0.3s ease;
+    z-index: 2;
+  }
+
+  .password-toggle:hover {
+    color: var(--text-primary);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .input-wrapper-register.has-toggle .form-input-register {
+    padding-right: 3rem;
+  }
+
+  /* Password Strength Indicator */
+  .password-strength {
+    margin-top: 0.5rem;
+    height: 4px;
+    background: var(--glass-border);
+    border-radius: 2px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .password-strength.active {
+    opacity: 1;
+  }
+
+  .password-strength-bar {
+    height: 100%;
+    width: 0;
+    transition: all 0.3s ease;
+    border-radius: 2px;
+  }
+
+  .password-strength-bar.weak {
+    width: 33%;
+    background: #ff3b30;
+  }
+
+  .password-strength-bar.medium {
+    width: 66%;
+    background: #ff9500;
+  }
+
+  .password-strength-bar.strong {
+    width: 100%;
+    background: #34c759;
+  }
+
+  .password-hint {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .password-hint.active {
+    opacity: 1;
+  }
+
+  /* Botón de Registro */
+  .btn-register-custom {
+    width: 100%;
+    padding: 1rem;
+    background: var(--accent-gradient);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+    margin-top: 1rem;
+  }
+
+  .btn-register-custom::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .btn-register-custom:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+  }
+
+  .btn-register-custom:hover::before {
+    left: 100%;
+  }
+
+  .btn-register-custom:active {
+    transform: translateY(-1px);
+  }
+
+  /* Login Link */
+  .login-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    position: relative;
+    z-index: 1;
+  }
+
+  .login-link a {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .login-link a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--accent-gradient);
+    transition: width 0.3s ease;
+  }
+
+  .login-link a:hover::after {
+    width: 100%;
+  }
+
+  /* Error Messages */
+  .error-message-register {
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+    color: #ff3b30;
+    font-size: 0.9rem;
+    animation: shake 0.4s ease;
+    position: relative;
+    z-index: 1;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+  }
+
+  .field-error {
+    color: #ff3b30;
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    display: block;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Responsive Design */
+  @media (max-width: 576px) {
+    .register-card {
+      padding: 2rem 1.5rem;
+      border-radius: 20px;
+    }
+
+    .register-title {
+      font-size: 1.75rem;
+    }
+
+    .form-input-register,
+    .form-select-register {
+      padding: 0.85rem 1rem;
+      font-size: 16px;
+    }
+
+    .input-wrapper-register .form-input-register,
+    .input-wrapper-register .form-select-register {
+      padding-left: 2.75rem;
+    }
+
+    .btn-register-custom {
+      padding: 0.9rem;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .register-container {
+      padding: 1rem 0.5rem;
+    }
+
+    .register-card {
+      padding: 1.5rem 1rem;
+    }
+  }
+
+  /* Loading State */
+  .btn-register-custom.loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .btn-register-custom.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin-left: -10px;
+    margin-top: -10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Success Checkmark Animation */
+  @keyframes checkmark {
+    0% { stroke-dashoffset: 50; }
+    100% { stroke-dashoffset: 0; }
+  }
+</style>
+
+<div class="register-container">
+  <div class="register-card">
+    <h1 class="register-title">Crear Cuenta</h1>
+    <p class="register-subtitle">Completa el formulario para registrarte</p>
+
+    {% if form.non_field_errors %}
+      <div class="error-message-register">
+        {{ form.non_field_errors }}
       </div>
+    {% endif %}
+
+    <form method="post" id="registerForm">
+      {% csrf_token %}
+      
+      <!-- Usuario -->
+      <div class="form-group-register">
+        <label for="{{ form.username.id_for_label }}" class="form-label-register">
+          Usuario
+        </label>
+        <div class="input-wrapper-register">
+          <span class="input-icon-register">👤</span>
+          <input 
+            type="text" 
+            name="{{ form.username.name }}" 
+            id="{{ form.username.id_for_label }}"
+            class="form-input-register"
+            placeholder="Elige un nombre de usuario"
+            required
+            autocomplete="username"
+            {% if form.username.value %}value="{{ form.username.value }}"{% endif %}
+          >
+        </div>
+        {% if form.username.errors %}
+          <small class="field-error">{{ form.username.errors.0 }}</small>
+        {% endif %}
+      </div>
+
+      <!-- Email -->
+      <div class="form-group-register">
+        <label for="{{ form.email.id_for_label }}" class="form-label-register">
+          Correo electrónico
+        </label>
+        <div class="input-wrapper-register">
+          <span class="input-icon-register">📧</span>
+          <input 
+            type="email" 
+            name="{{ form.email.name }}" 
+            id="{{ form.email.id_for_label }}"
+            class="form-input-register"
+            placeholder="tu@correo.com"
+            required
+            autocomplete="email"
+            {% if form.email.value %}value="{{ form.email.value }}"{% endif %}
+          >
+        </div>
+        {% if form.email.errors %}
+          <small class="field-error">{{ form.email.errors.0 }}</small>
+        {% endif %}
+      </div>
+
+      <!-- Rol -->
+      <div class="form-group-register">
+        <label for="{{ form.role.id_for_label }}" class="form-label-register">
+          Rol
+        </label>
+        <div class="input-wrapper-register">
+          <span class="input-icon-register">🎭</span>
+          <select 
+            name="{{ form.role.name }}" 
+            id="{{ form.role.id_for_label }}"
+            class="form-select-register"
+            required
+          >
+            {% for value, label in form.role.field.choices %}
+              <option value="{{ value }}" {% if form.role.value == value %}selected{% endif %}>
+                {{ label }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% if form.role.errors %}
+          <small class="field-error">{{ form.role.errors.0 }}</small>
+        {% endif %}
+      </div>
+
+      <!-- Contraseña -->
+      <div class="form-group-register">
+        <label for="{{ form.password1.id_for_label }}" class="form-label-register">
+          Contraseña
+        </label>
+        <div class="input-wrapper-register has-toggle">
+          <span class="input-icon-register">🔒</span>
+          <input 
+            type="password" 
+            name="{{ form.password1.name }}" 
+            id="{{ form.password1.id_for_label }}"
+            class="form-input-register"
+            placeholder="Crea una contraseña segura"
+            required
+            autocomplete="new-password"
+          >
+          <button type="button" class="password-toggle" data-target="{{ form.password1.id_for_label }}">
+            👁️
+          </button>
+        </div>
+        <div class="password-strength" id="passwordStrength">
+          <div class="password-strength-bar"></div>
+        </div>
+        <small class="password-hint" id="passwordHint">
+          Usa al menos 8 caracteres con letras y números
+        </small>
+        {% if form.password1.errors %}
+          <small class="field-error">{{ form.password1.errors.0 }}</small>
+        {% endif %}
+      </div>
+
+      <!-- Confirmar Contraseña -->
+      <div class="form-group-register">
+        <label for="{{ form.password2.id_for_label }}" class="form-label-register">
+          Confirmar contraseña
+        </label>
+        <div class="input-wrapper-register has-toggle">
+          <span class="input-icon-register">🔐</span>
+          <input 
+            type="password" 
+            name="{{ form.password2.name }}" 
+            id="{{ form.password2.id_for_label }}"
+            class="form-input-register"
+            placeholder="Repite tu contraseña"
+            required
+            autocomplete="new-password"
+          >
+          <button type="button" class="password-toggle" data-target="{{ form.password2.id_for_label }}">
+            👁️
+          </button>
+        </div>
+        {% if form.password2.errors %}
+          <small class="field-error">{{ form.password2.errors.0 }}</small>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn-register-custom" id="submitBtn">
+        Crear cuenta
+      </button>
+    </form>
+
+    <div class="login-link">
+      ¿Ya tienes cuenta? <a href="{% url 'accounts:login' %}">Iniciar sesión</a>
     </div>
   </div>
 </div>
+
+<script>
+  // Toggle Password Visibility
+  document.querySelectorAll('.password-toggle').forEach(button => {
+    button.addEventListener('click', function() {
+      const targetId = this.getAttribute('data-target');
+      const input = document.getElementById(targetId);
+      
+      if (input.type === 'password') {
+        input.type = 'text';
+        this.textContent = '🙈';
+      } else {
+        input.type = 'password';
+        this.textContent = '👁️';
+      }
+    });
+  });
+
+  // Password Strength Indicator
+  const password1 = document.getElementById('{{ form.password1.id_for_label }}');
+  const strengthBar = document.querySelector('.password-strength-bar');
+  const strengthContainer = document.getElementById('passwordStrength');
+  const passwordHint = document.getElementById('passwordHint');
+
+  password1.addEventListener('input', function() {
+    const value = this.value;
+    const strength = calculatePasswordStrength(value);
+    
+    if (value.length > 0) {
+      strengthContainer.classList.add('active');
+      passwordHint.classList.add('active');
+      
+      strengthBar.className = 'password-strength-bar';
+      
+      if (strength < 40) {
+        strengthBar.classList.add('weak');
+        passwordHint.textContent = 'Contraseña débil';
+        passwordHint.style.color = '#ff3b30';
+      } else if (strength < 70) {
+        strengthBar.classList.add('medium');
+        passwordHint.textContent = 'Contraseña media';
+        passwordHint.style.color = '#ff9500';
+      } else {
+        strengthBar.classList.add('strong');
+        passwordHint.textContent = '¡Contraseña fuerte!';
+        passwordHint.style.color = '#34c759';
+      }
+    } else {
+      strengthContainer.classList.remove('active');
+      passwordHint.classList.remove('active');
+    }
+  });
+
+  function calculatePasswordStrength(password) {
+    let strength = 0;
+    
+    if (password.length >= 8) strength += 25;
+    if (password.length >= 12) strength += 15;
+    if (/[a-z]/.test(password)) strength += 15;
+    if (/[A-Z]/.test(password)) strength += 15;
+    if (/[0-9]/.test(password)) strength += 15;
+    if (/[^a-zA-Z0-9]/.test(password)) strength += 15;
+    
+    return strength;
+  }
+
+  // Form Submit Loading
+  document.getElementById('registerForm').addEventListener('submit', function() {
+    const btn = document.getElementById('submitBtn');
+    btn.classList.add('loading');
+    btn.textContent = '';
+  });
+
+  // Auto-focus en el primer campo
+  document.addEventListener('DOMContentLoaded', function() {
+    const firstInput = document.querySelector('.form-input-register');
+    if (firstInput && !firstInput.value) {
+      firstInput.focus();
+    }
+  });
+
+  // Animación al escribir en los inputs
+  const inputs = document.querySelectorAll('.form-input-register, .form-select-register');
+  inputs.forEach(input => {
+    input.addEventListener('focus', function() {
+      this.parentElement.style.transform = 'translateY(-2px)';
+    });
+    
+    input.addEventListener('blur', function() {
+      this.parentElement.style.transform = 'translateY(0)';
+    });
+  });
+
+  // Email validation feedback
+  const emailInput = document.getElementById('{{ form.email.id_for_label }}');
+  emailInput.addEventListener('blur', function() {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (this.value && !emailPattern.test(this.value)) {
+      this.style.borderColor = 'rgba(255, 59, 48, 0.5)';
+    } else if (this.value) {
+      this.style.borderColor = 'rgba(52, 199, 89, 0.5)';
+    }
+  });
+</script>
 {% endblock %}

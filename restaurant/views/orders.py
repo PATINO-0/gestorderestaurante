@@ -38,7 +38,6 @@ class OrderCreateView(RoleRequiredMixin, CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        # Pasamos el usuario al formulario para controlar el status
         kwargs['user'] = self.request.user
         return kwargs
 
@@ -85,7 +84,6 @@ class OrderUpdateView(RoleRequiredMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        # Pasamos el usuario también aquí
         kwargs['user'] = self.request.user
         return kwargs
 
@@ -113,4 +111,5 @@ class OrderDeleteView(RoleRequiredMixin, DeleteView):
     model = Order
     template_name = 'restaurant/order_confirm_delete.html'
     success_url = reverse_lazy('restaurant:order_list')
-    allowed_roles = ['ADMIN']
+    # 🔹 Mesero también puede eliminar pedidos
+    allowed_roles = ['ADMIN', 'WAITER']

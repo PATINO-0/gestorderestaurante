@@ -12,3 +12,6 @@ from .reports import OrdersPDFReportView, OrdersExcelReportView
 from .tables import (
     TableListView, TableCreateView, TableUpdateView, TableDeleteView
 )
+from .ingredients import (
+    IngredientListView, IngredientCreateView, IngredientUpdateView, IngredientDeleteView
+)

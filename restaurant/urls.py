@@ -6,6 +6,7 @@ from .views import (
     OrderListView, OrderCreateView, OrderUpdateView, OrderDeleteView,
     OrdersPDFReportView, OrdersExcelReportView,
     TableListView, TableCreateView, TableUpdateView, TableDeleteView,
+    IngredientListView, IngredientCreateView, IngredientUpdateView, IngredientDeleteView,
 )
 
 app_name = 'restaurant'
@@ -18,6 +19,12 @@ urlpatterns = [
     path('dishes/create/', DishCreateView.as_view(), name='dish_create'),
     path('dishes/<int:pk>/edit/', DishUpdateView.as_view(), name='dish_edit'),
     path('dishes/<int:pk>/delete/', DishDeleteView.as_view(), name='dish_delete'),
+
+    # Ingredientes
+    path('ingredients/', IngredientListView.as_view(), name='ingredient_list'),
+    path('ingredients/create/', IngredientCreateView.as_view(), name='ingredient_create'),
+    path('ingredients/<int:pk>/edit/', IngredientUpdateView.as_view(), name='ingredient_edit'),
+    path('ingredients/<int:pk>/delete/', IngredientDeleteView.as_view(), name='ingredient_delete'),
 
     # Mesas
     path('tables/', TableListView.as_view(), name='table_list'),
