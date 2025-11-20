@@ -2,63 +2,559 @@
 {% block title %}Reservas{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  {% if user.role == 'CUSTOMER' %}
-    <h2 class="text-warning">Mis reservas</h2>
-  {% else %}
-    <h2 class="text-warning">Reservas</h2>
-  {% endif %}
+<style>
+  /* Container Principal */
+  .reservations-container {
+    animation: fadeInUp 0.6s ease;
+  }
 
-  <a href="{% url 'restaurant:reservation_create' %}" class="btn btn-warning">
-    Nueva reserva
-  </a>
-</div>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
-<div class="card bg-card shadow-sm">
-  <div class="card-body table-responsive">
-    <table class="table table-dark table-striped align-middle">
-      <thead>
-        <tr>
-          <th>Mesa</th>
-          <th>Fecha</th>
-          <th>Hora</th>
-          <th>Personas</th>
-          {% if user.role != 'CUSTOMER' %}
-            <th>Cliente</th>
-          {% endif %}
-          <th>Estado</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for reservation in reservations %}
-          <tr>
-            <td>Mesa {{ reservation.table.number }}</td>
-            <td>{{ reservation.date }}</td>
-            <td>{{ reservation.time }}</td>
-            <td>{{ reservation.guests }}</td>
-            {% if user.role != 'CUSTOMER' %}
-              <td>{{ reservation.customer.username }}</td>
-            {% endif %}
-            <td>{{ reservation.get_status_display }}</td>
-            <td class="text-end">
-              <a href="{% url 'restaurant:reservation_edit' reservation.pk %}" class="btn btn-sm btn-outline-warning">
-                Editar
-              </a>
-              <a href="{% url 'restaurant:reservation_delete' reservation.pk %}" class="btn btn-sm btn-outline-danger">
-                Eliminar
-              </a>
-            </td>
-          </tr>
-        {% empty %}
-          <tr>
-            <td colspan="7" class="text-center">
-              No hay reservas registradas.
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  /* Header con Título y Acción */
+  .reservations-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+    animation: slideInLeft 0.6s ease;
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .reservations-title {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+  }
+
+  .btn-create-new {
+    padding: 0.85rem 1.75rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-create-new:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: white;
+  }
+
+  /* Grid de Cards */
+  .reservations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .reservation-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 1.75rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease;
+    animation-fill-mode: both;
+  }
+
+  .reservation-card:nth-child(1) { animation-delay: 0.05s; }
+  .reservation-card:nth-child(2) { animation-delay: 0.1s; }
+  .reservation-card:nth-child(3) { animation-delay: 0.15s; }
+  .reservation-card:nth-child(4) { animation-delay: 0.2s; }
+  .reservation-card:nth-child(5) { animation-delay: 0.25s; }
+  .reservation-card:nth-child(6) { animation-delay: 0.3s; }
+
+  .reservation-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    transition: opacity 0.3s ease;
+  }
+
+  .reservation-card.status-confirmed::before {
+    background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+    opacity: 1;
+  }
+
+  .reservation-card.status-pending::before {
+    background: linear-gradient(135deg, #ff9500 0%, #ffb340 100%);
+    opacity: 1;
+  }
+
+  .reservation-card.status-cancelled::before {
+    background: linear-gradient(135deg, #ff3b30 0%, #ff6b6b 100%);
+    opacity: 1;
+  }
+
+  .reservation-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Card Header */
+  .reservation-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+  }
+
+  .reservation-table {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Status Badge */
+  .status-badge {
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .status-confirmed {
+    background: rgba(52, 199, 89, 0.15);
+    color: #34c759;
+    border: 1px solid rgba(52, 199, 89, 0.3);
+  }
+
+  .status-pending {
+    background: rgba(255, 149, 0, 0.15);
+    color: #ff9500;
+    border: 1px solid rgba(255, 149, 0, 0.3);
+  }
+
+  .status-cancelled {
+    background: rgba(255, 59, 48, 0.15);
+    color: #ff3b30;
+    border: 1px solid rgba(255, 59, 48, 0.3);
+  }
+
+  /* DateTime Display */
+  .datetime-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+  }
+
+  .datetime-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .datetime-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+  }
+
+  .datetime-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Guest Info */
+  .guests-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--glass-bg);
+    border-radius: 10px;
+  }
+
+  .guests-icon {
+    font-size: 1.5rem;
+  }
+
+  .guests-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .guests-count {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+
+  /* Customer Info */
+  .customer-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    margin-bottom: 1rem;
+  }
+
+  .customer-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+  }
+
+  .customer-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* Card Footer */
+  .reservation-card-footer {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .btn-action-card {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .btn-edit {
+    background: rgba(102, 126, 234, 0.1);
+    border: 1.5px solid rgba(102, 126, 234, 0.3);
+    color: #667eea;
+  }
+
+  .btn-edit:hover {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.5);
+    transform: translateY(-2px);
+    color: #667eea;
+  }
+
+  .btn-delete {
+    background: rgba(255, 59, 48, 0.1);
+    border: 1.5px solid rgba(255, 59, 48, 0.3);
+    color: #ff3b30;
+  }
+
+  .btn-delete:hover {
+    background: rgba(255, 59, 48, 0.2);
+    border-color: rgba(255, 59, 48, 0.5);
+    transform: translateY(-2px);
+    color: #ff3b30;
+  }
+
+  /* Empty State */
+  .empty-state {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount));
+    border: 2px dashed var(--glass-border);
+    border-radius: 24px;
+    padding: 4rem 2rem;
+    text-align: center;
+    animation: fadeInUp 0.6s ease;
+  }
+
+  .empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  .empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state-text {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .reservations-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .reservations-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .btn-create-new {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .reservation-card-footer {
+      flex-direction: column;
+    }
+
+    .btn-action-card {
+      width: 100%;
+    }
+
+    .datetime-container {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .reservations-title {
+      font-size: 1.75rem;
+    }
+
+    .reservation-card {
+      padding: 1.5rem;
+    }
+
+    .reservation-table {
+      font-size: 1.25rem;
+    }
+  }
+</style>
+
+<div class="reservations-container">
+  <!-- Header -->
+  <div class="reservations-header">
+    <h1 class="reservations-title">
+      {% if user.role == 'CUSTOMER' %}
+        📅 Mis Reservas
+      {% else %}
+        📅 Todas las Reservas
+      {% endif %}
+    </h1>
+    <a href="{% url 'restaurant:reservation_create' %}" class="btn-create-new">
+      <span>➕</span>
+      Nueva reserva
+    </a>
   </div>
+
+  <!-- Grid de Cards -->
+  {% if reservations %}
+    <div class="reservations-grid">
+      {% for reservation in reservations %}
+        <div class="reservation-card status-{{ reservation.status|lower }}">
+          
+          <!-- Header del Card -->
+          <div class="reservation-card-header">
+            <h3 class="reservation-table">
+              <span>🪑</span>
+              <span>Mesa {{ reservation.table.number }}</span>
+            </h3>
+            <span class="status-badge status-{{ reservation.status|lower }}">
+              {% if reservation.status == 'CONFIRMED' %}
+                ✅ {{ reservation.get_status_display }}
+              {% elif reservation.status == 'PENDING' %}
+                ⏳ {{ reservation.get_status_display }}
+              {% elif reservation.status == 'CANCELLED' %}
+                ❌ {{ reservation.get_status_display }}
+              {% else %}
+                {{ reservation.get_status_display }}
+              {% endif %}
+            </span>
+          </div>
+
+          <!-- Fecha y Hora -->
+          <div class="datetime-container">
+            <div class="datetime-item">
+              <span class="datetime-label">Fecha</span>
+              <span class="datetime-value">
+                <span>📅</span>
+                <span>{{ reservation.date|date:"d/m/Y" }}</span>
+              </span>
+            </div>
+            <div class="datetime-item">
+              <span class="datetime-label">Hora</span>
+              <span class="datetime-value">
+                <span>🕐</span>
+                <span>{{ reservation.time|time:"H:i" }}</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Número de Personas -->
+          <div class="guests-info">
+            <span class="guests-icon">👥</span>
+            <div>
+              <div class="guests-text">Comensales</div>
+              <div class="guests-count">{{ reservation.guests }} persona{% if reservation.guests > 1 %}s{% endif %}</div>
+            </div>
+          </div>
+
+          <!-- Cliente (solo para staff) -->
+          {% if user.role != 'CUSTOMER' %}
+            <div class="customer-info">
+              <div class="customer-avatar">👤</div>
+              <div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Cliente</div>
+                <div class="customer-name">{{ reservation.customer.username }}</div>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Acciones -->
+          <div class="reservation-card-footer">
+            <a href="{% url 'restaurant:reservation_edit' reservation.pk %}" class="btn-action-card btn-edit">
+              <span>✏️</span>
+              Editar
+            </a>
+            <a href="{% url 'restaurant:reservation_delete' reservation.pk %}" class="btn-action-card btn-delete">
+              <span>🗑️</span>
+              Eliminar
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-state-icon">📅</div>
+      <h3 class="empty-state-title">No hay reservas registradas</h3>
+      <p class="empty-state-text">
+        {% if user.role == 'CUSTOMER' %}
+          Aún no has realizado ninguna reserva
+        {% else %}
+          No hay reservas en el sistema
+        {% endif %}
+      </p>
+      <a href="{% url 'restaurant:reservation_create' %}" class="btn-create-new">
+        <span>➕</span>
+        Crear primera reserva
+      </a>
+    </div>
+  {% endif %}
 </div>
+
+<script>
+  // Animación de entrada
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, {
+    threshold: 0.1
+  });
+
+  document.querySelectorAll('.reservation-card').forEach(card => {
+    observer.observe(card);
+  });
+
+  // Confirmación antes de eliminar
+  document.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      const tableInfo = this.closest('.reservation-card').querySelector('.reservation-table span:last-child').textContent;
+      if (!confirm(`¿Estás seguro de que deseas eliminar la reserva de ${tableInfo}?`)) {
+        e.preventDefault();
+      }
+    });
+  });
+
+  // Highlight reservas próximas (hoy o mañana)
+  document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    document.querySelectorAll('.reservation-card').forEach(card => {
+      const dateText = card.querySelector('.datetime-value span:last-child').textContent;
+      const [day, month, year] = dateText.split('/');
+      const reservationDate = new Date(year, month - 1, day);
+      reservationDate.setHours(0, 0, 0, 0);
+
+      if (reservationDate.getTime() === today.getTime() || reservationDate.getTime() === tomorrow.getTime()) {
+        card.style.borderColor = 'rgba(102, 126, 234, 0.5)';
+      }
+    });
+  });
+</script>
 {% endblock %}

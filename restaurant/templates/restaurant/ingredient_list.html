@@ -2,46 +2,593 @@
 {% block title %}Ingredientes{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="text-warning">Ingredientes</h2>
-  <a href="{% url 'restaurant:ingredient_create' %}" class="btn btn-warning">
-    Nuevo ingrediente
-  </a>
+<style>
+  /* Container Principal */
+  .ingredients-container {
+    animation: fadeInUp 0.6s ease;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Header con Título y Acción */
+  .ingredients-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+    animation: slideInLeft 0.6s ease;
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .ingredients-title {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+  }
+
+  .btn-create-new {
+    padding: 0.85rem 1.75rem;
+    background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+  }
+
+  .btn-create-new:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(52, 199, 89, 0.4);
+    color: white;
+  }
+
+  /* Stats Bar */
+  .ingredients-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .stat-badge {
+    padding: 0.5rem 1rem;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .stat-badge strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* Grid de Cards */
+  .ingredients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .ingredient-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 1.75rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease;
+    animation-fill-mode: both;
+  }
+
+  .ingredient-card:nth-child(1) { animation-delay: 0.05s; }
+  .ingredient-card:nth-child(2) { animation-delay: 0.1s; }
+  .ingredient-card:nth-child(3) { animation-delay: 0.15s; }
+  .ingredient-card:nth-child(4) { animation-delay: 0.2s; }
+  .ingredient-card:nth-child(5) { animation-delay: 0.25s; }
+  .ingredient-card:nth-child(6) { animation-delay: 0.3s; }
+
+  .ingredient-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    transition: opacity 0.3s ease;
+  }
+
+  .ingredient-card.stock-ok::before {
+    background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+    opacity: 1;
+  }
+
+  .ingredient-card.stock-low::before {
+    background: linear-gradient(135deg, #ff9500 0%, #ffb340 100%);
+    opacity: 1;
+  }
+
+  .ingredient-card.stock-critical::before {
+    background: linear-gradient(135deg, #ff3b30 0%, #ff6b6b 100%);
+    opacity: 1;
+  }
+
+  .ingredient-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Card Header */
+  .ingredient-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+  }
+
+  .ingredient-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .ingredient-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+
+  /* Stock Info */
+  .stock-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding: 1rem;
+    background: var(--glass-bg);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+  }
+
+  .stock-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .stock-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+  }
+
+  .stock-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+  }
+
+  .stock-unit {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  /* Stock Status Badge */
+  .stock-status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .status-ok {
+    background: rgba(52, 199, 89, 0.15);
+    color: #34c759;
+    border: 1px solid rgba(52, 199, 89, 0.3);
+  }
+
+  .status-low {
+    background: rgba(255, 149, 0, 0.15);
+    color: #ff9500;
+    border: 1px solid rgba(255, 149, 0, 0.3);
+  }
+
+  .status-critical {
+    background: rgba(255, 59, 48, 0.15);
+    color: #ff3b30;
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* Progress Bar */
+  .stock-progress {
+    width: 100%;
+    height: 8px;
+    background: var(--glass-border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+  }
+
+  .stock-progress-bar {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.5s ease, background 0.3s ease;
+    width: 0%;
+  }
+
+  .progress-ok {
+    background: linear-gradient(90deg, #34c759, #30d158);
+  }
+
+  .progress-low {
+    background: linear-gradient(90deg, #ff9500, #ffb340);
+  }
+
+  .progress-critical {
+    background: linear-gradient(90deg, #ff3b30, #ff6b6b);
+  }
+
+  /* Card Footer con Acciones */
+  .ingredient-card-footer {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .btn-action-card {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .btn-edit {
+    background: rgba(52, 199, 89, 0.1);
+    border: 1.5px solid rgba(52, 199, 89, 0.3);
+    color: #34c759;
+  }
+
+  .btn-edit:hover {
+    background: rgba(52, 199, 89, 0.2);
+    border-color: rgba(52, 199, 89, 0.5);
+    transform: translateY(-2px);
+    color: #34c759;
+  }
+
+  .btn-delete {
+    background: rgba(255, 59, 48, 0.1);
+    border: 1.5px solid rgba(255, 59, 48, 0.3);
+    color: #ff3b30;
+  }
+
+  .btn-delete:hover {
+    background: rgba(255, 59, 48, 0.2);
+    border-color: rgba(255, 59, 48, 0.5);
+    transform: translateY(-2px);
+    color: #ff3b30;
+  }
+
+  /* Empty State */
+  .empty-state {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount));
+    border: 2px dashed var(--glass-border);
+    border-radius: 24px;
+    padding: 4rem 2rem;
+    text-align: center;
+    animation: fadeInUp 0.6s ease;
+  }
+
+  .empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  .empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state-text {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .ingredients-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .ingredients-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .btn-create-new {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .ingredient-card-footer {
+      flex-direction: column;
+    }
+
+    .btn-action-card {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .ingredients-title {
+      font-size: 1.75rem;
+    }
+
+    .ingredient-card {
+      padding: 1.5rem;
+    }
+
+    .stock-value {
+      font-size: 1.25rem;
+    }
+  }
+</style>
+
+<div class="ingredients-container">
+  <!-- Header -->
+  <div class="ingredients-header">
+    <h1 class="ingredients-title">🥘 Inventario de Ingredientes</h1>
+    <a href="{% url 'restaurant:ingredient_create' %}" class="btn-create-new">
+      <span>➕</span>
+      Nuevo ingrediente
+    </a>
+  </div>
+
+  <!-- Stats -->
+  <div class="ingredients-stats">
+    <div class="stat-badge">
+      <span>📋</span>
+      <span>Total: <strong>{{ ingredients|length }}</strong></span>
+    </div>
+    <div class="stat-badge">
+      <span>⚠️</span>
+      <span>Stock bajo: <strong id="lowStockCount">0</strong></span>
+    </div>
+    <div class="stat-badge">
+      <span>✅</span>
+      <span>Stock OK: <strong id="okStockCount">0</strong></span>
+    </div>
+  </div>
+
+  <!-- Grid de Cards -->
+  {% if ingredients %}
+    <div class="ingredients-grid">
+      {% for ingredient in ingredients %}
+        <div class="ingredient-card {% if ingredient.stock_quantity == 0 %}stock-critical{% elif ingredient.stock_quantity < ingredient.min_stock %}stock-low{% else %}stock-ok{% endif %}" data-stock="{{ ingredient.stock_quantity }}" data-min="{{ ingredient.min_stock }}">
+          
+          <!-- Header del Card -->
+          <div class="ingredient-card-header">
+            <h3 class="ingredient-name">{{ ingredient.name }}</h3>
+            <span class="ingredient-icon">🥘</span>
+          </div>
+
+          <!-- Stock Status Badge -->
+          {% if ingredient.stock_quantity == 0 %}
+            <div class="stock-status-badge status-critical">
+              <span>⛔</span>
+              <span>Sin stock disponible</span>
+            </div>
+          {% elif ingredient.stock_quantity < ingredient.min_stock %}
+            <div class="stock-status-badge status-low">
+              <span>⚠️</span>
+              <span>Stock bajo - Reabastecer</span>
+            </div>
+          {% else %}
+            <div class="stock-status-badge status-ok">
+              <span>✅</span>
+              <span>Stock suficiente</span>
+            </div>
+          {% endif %}
+
+          <!-- Stock Progress Bar -->
+          <div class="stock-progress">
+            <div class="stock-progress-bar {% if ingredient.stock_quantity == 0 %}progress-critical{% elif ingredient.stock_quantity < ingredient.min_stock %}progress-low{% else %}progress-ok{% endif %}" 
+                 data-stock="{{ ingredient.stock_quantity }}" 
+                 data-min="{{ ingredient.min_stock }}"></div>
+          </div>
+
+          <!-- Stock Info Grid -->
+          <div class="stock-info">
+            <div class="stock-item">
+              <span class="stock-label">Stock Actual</span>
+              <div class="stock-value">
+                <span>{{ ingredient.stock_quantity }}</span>
+                <span class="stock-unit">{{ ingredient.unit }}</span>
+              </div>
+            </div>
+            <div class="stock-item">
+              <span class="stock-label">Stock Mínimo</span>
+              <div class="stock-value">
+                <span>{{ ingredient.min_stock }}</span>
+                <span class="stock-unit">{{ ingredient.unit }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Acciones -->
+          <div class="ingredient-card-footer">
+            <a href="{% url 'restaurant:ingredient_edit' ingredient.pk %}" class="btn-action-card btn-edit">
+              <span>✏️</span>
+              Editar
+            </a>
+            <a href="{% url 'restaurant:ingredient_delete' ingredient.pk %}" class="btn-action-card btn-delete">
+              <span>🗑️</span>
+              Eliminar
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-state-icon">🥘</div>
+      <h3 class="empty-state-title">No hay ingredientes registrados</h3>
+      <p class="empty-state-text">
+        Comienza agregando ingredientes a tu inventario
+      </p>
+      <a href="{% url 'restaurant:ingredient_create' %}" class="btn-create-new">
+        <span>➕</span>
+        Crear primer ingrediente
+      </a>
+    </div>
+  {% endif %}
 </div>
 
-<div class="card bg-card shadow-sm">
-  <div class="card-body table-responsive">
-    <table class="table table-dark table-striped align-middle">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Unidad</th>
-          <th>Stock</th>
-          <th>Stock mínimo</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for ingredient in ingredients %}
-          <tr>
-            <td>{{ ingredient.name }}</td>
-            <td>{{ ingredient.unit }}</td>
-            <td>{{ ingredient.stock_quantity }}</td>
-            <td>{{ ingredient.min_stock }}</td>
-            <td class="text-end">
-              <a href="{% url 'restaurant:ingredient_edit' ingredient.pk %}"
-                 class="btn btn-sm btn-outline-warning">Editar</a>
-              <a href="{% url 'restaurant:ingredient_delete' ingredient.pk %}"
-                 class="btn btn-sm btn-outline-danger">Eliminar</a>
-            </td>
-          </tr>
-        {% empty %}
-          <tr>
-            <td colspan="5" class="text-center">No hay ingredientes registrados.</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+<script>
+  // Calcular estadísticas de stock
+  document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.ingredient-card');
+    let lowStock = 0;
+    let okStock = 0;
+    
+    cards.forEach(card => {
+      const stock = parseFloat(card.dataset.stock);
+      const minStock = parseFloat(card.dataset.min);
+      
+      if (stock < minStock) {
+        lowStock++;
+      } else {
+        okStock++;
+      }
+    });
+    
+    document.getElementById('lowStockCount').textContent = lowStock;
+    document.getElementById('okStockCount').textContent = okStock;
+    
+    // Highlight low stock cards
+    if (lowStock > 0) {
+      document.querySelector('.ingredients-stats').insertAdjacentHTML('beforeend', `
+        <div class="stat-badge" style="background: rgba(255, 149, 0, 0.1); border-color: rgba(255, 149, 0, 0.3);">
+          <span>⚡</span>
+          <span style="color: #ff9500;"><strong>Atención requerida</strong></span>
+        </div>
+      `);
+    }
+    
+    // Calcular y aplicar porcentajes de barra de progreso
+    document.querySelectorAll('.stock-progress-bar').forEach(bar => {
+      const stock = parseFloat(bar.dataset.stock);
+      const minStock = parseFloat(bar.dataset.min);
+      
+      if (minStock > 0) {
+        let percentage = (stock / minStock) * 100;
+        percentage = Math.min(percentage, 100); // Máximo 100%
+        bar.style.width = percentage + '%';
+      } else {
+        bar.style.width = '100%';
+      }
+    });
+  });
+
+  // Animación de entrada
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, {
+    threshold: 0.1
+  });
+
+  document.querySelectorAll('.ingredient-card').forEach(card => {
+    observer.observe(card);
+  });
+
+  // Confirmación antes de eliminar
+  document.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      const ingredientName = this.closest('.ingredient-card').querySelector('.ingredient-name').textContent;
+      if (!confirm(`¿Estás seguro de que deseas eliminar "${ingredientName}"?\n\nSi está asociado a algún plato, no podrá eliminarse.`)) {
+        e.preventDefault();
+      }
+    });
+  });
+</script>
 {% endblock %}

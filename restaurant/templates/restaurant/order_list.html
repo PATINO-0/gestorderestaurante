@@ -2,73 +2,521 @@
 {% block title %}Pedidos{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  {% if user.role == 'CUSTOMER' %}
-    <h2 class="text-warning">Mis pedidos</h2>
-  {% else %}
-    <h2 class="text-warning">Pedidos</h2>
-  {% endif %}
+<style>
+  /* Container Principal */
+  .orders-container {
+    animation: fadeInUp 0.6s ease;
+  }
 
-  <a href="{% url 'restaurant:order_create' %}" class="btn btn-warning">
-    Nuevo pedido
-  </a>
-</div>
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
-<div class="card bg-card shadow-sm">
-  <div class="card-body table-responsive">
-    <table class="table table-dark table-striped align-middle">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Mesa</th>
-          {% if user.role != 'CUSTOMER' %}
-            <th>Cliente</th>
-          {% endif %}
-          <th>Estado</th>
-          <th>Total</th>
-          <th>Fecha</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for order in orders %}
-          <tr>
-            <td>#{{ order.id }}</td>
-            <td>Mesa {{ order.table.number }}</td>
+  /* Header con Título y Acción */
+  .orders-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+    animation: slideInLeft 0.6s ease;
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .orders-title {
+    font-size: 2rem;
+    font-weight: 700;
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+  }
+
+  .btn-create-new {
+    padding: 0.85rem 1.75rem;
+    background: var(--gold-gradient);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(247, 151, 30, 0.3);
+  }
+
+  .btn-create-new:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(247, 151, 30, 0.4);
+    color: white;
+  }
+
+  /* Grid de Cards */
+  .orders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .order-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 1.75rem;
+    box-shadow: var(--shadow-md);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease;
+    animation-fill-mode: both;
+  }
+
+  .order-card:nth-child(1) { animation-delay: 0.05s; }
+  .order-card:nth-child(2) { animation-delay: 0.1s; }
+  .order-card:nth-child(3) { animation-delay: 0.15s; }
+  .order-card:nth-child(4) { animation-delay: 0.2s; }
+  .order-card:nth-child(5) { animation-delay: 0.25s; }
+  .order-card:nth-child(6) { animation-delay: 0.3s; }
+
+  .order-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--gold-gradient);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .order-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(247, 151, 30, 0.3);
+  }
+
+  .order-card:hover::before {
+    opacity: 1;
+  }
+
+  /* Card Header */
+  .order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+  }
+
+  .order-id {
+    font-size: 1.5rem;
+    font-weight: 700;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+  }
+
+  /* Status Badge */
+  .status-badge {
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .status-pending {
+    background: rgba(255, 149, 0, 0.15);
+    color: #ff9500;
+    border: 1px solid rgba(255, 149, 0, 0.3);
+  }
+
+  .status-preparing {
+    background: rgba(102, 126, 234, 0.15);
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+  }
+
+  .status-ready {
+    background: rgba(52, 199, 89, 0.15);
+    color: #34c759;
+    border: 1px solid rgba(52, 199, 89, 0.3);
+  }
+
+  .status-delivered {
+    background: rgba(142, 142, 147, 0.15);
+    color: #8e8e93;
+    border: 1px solid rgba(142, 142, 147, 0.3);
+  }
+
+  .status-cancelled {
+    background: rgba(255, 59, 48, 0.15);
+    color: #ff3b30;
+    border: 1px solid rgba(255, 59, 48, 0.3);
+  }
+
+  /* Order Info Grid */
+  .order-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .order-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .order-info-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+  }
+
+  .order-info-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  /* Total Amount */
+  .order-total {
+    padding: 1rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    margin-bottom: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .total-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .total-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Card Footer */
+  .order-card-footer {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .btn-action-card {
+    flex: 1;
+    padding: 0.65rem 1rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .btn-edit {
+    background: rgba(247, 151, 30, 0.1);
+    border: 1.5px solid rgba(247, 151, 30, 0.3);
+    color: #f7971e;
+  }
+
+  .btn-edit:hover {
+    background: rgba(247, 151, 30, 0.2);
+    border-color: rgba(247, 151, 30, 0.5);
+    transform: translateY(-2px);
+    color: #f7971e;
+  }
+
+  .btn-delete {
+    background: rgba(255, 59, 48, 0.1);
+    border: 1.5px solid rgba(255, 59, 48, 0.3);
+    color: #ff3b30;
+  }
+
+  .btn-delete:hover {
+    background: rgba(255, 59, 48, 0.2);
+    border-color: rgba(255, 59, 48, 0.5);
+    transform: translateY(-2px);
+    color: #ff3b30;
+  }
+
+  /* Empty State */
+  .empty-state {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount));
+    border: 2px dashed var(--glass-border);
+    border-radius: 24px;
+    padding: 4rem 2rem;
+    text-align: center;
+    animation: fadeInUp 0.6s ease;
+  }
+
+  .empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  .empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state-text {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Date Display */
+  .order-date {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .orders-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .orders-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .btn-create-new {
+      width: 100%;
+      justify-content: center;
+    }
+
+    .order-card-footer {
+      flex-direction: column;
+    }
+
+    .btn-action-card {
+      width: 100%;
+    }
+
+    .order-info {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .orders-title {
+      font-size: 1.75rem;
+    }
+
+    .order-card {
+      padding: 1.5rem;
+    }
+
+    .total-value {
+      font-size: 1.5rem;
+    }
+  }
+</style>
+
+<div class="orders-container">
+  <!-- Header -->
+  <div class="orders-header">
+    <h1 class="orders-title">
+      {% if user.role == 'CUSTOMER' %}
+        📋 Mis Pedidos
+      {% else %}
+        📋 Todos los Pedidos
+      {% endif %}
+    </h1>
+    <a href="{% url 'restaurant:order_create' %}" class="btn-create-new">
+      <span>➕</span>
+      Nuevo pedido
+    </a>
+  </div>
+
+  <!-- Grid de Cards -->
+  {% if orders %}
+    <div class="orders-grid">
+      {% for order in orders %}
+        <div class="order-card">
+          
+          <!-- Header del Card -->
+          <div class="order-card-header">
+            <h3 class="order-id">#{{ order.id }}</h3>
+            <span class="status-badge status-{{ order.status|lower }}">
+              {% if order.status == 'PENDING' %}
+                ⏳ {{ order.get_status_display }}
+              {% elif order.status == 'PREPARING' %}
+                👨‍🍳 {{ order.get_status_display }}
+              {% elif order.status == 'READY' %}
+                ✅ {{ order.get_status_display }}
+              {% elif order.status == 'DELIVERED' %}
+                📦 {{ order.get_status_display }}
+              {% elif order.status == 'CANCELLED' %}
+                ❌ {{ order.get_status_display }}
+              {% else %}
+                {{ order.get_status_display }}
+              {% endif %}
+            </span>
+          </div>
+
+          <!-- Información del Pedido -->
+          <div class="order-info">
+            <div class="order-info-item">
+              <span class="order-info-label">Mesa</span>
+              <span class="order-info-value">🪑 Mesa {{ order.table.number }}</span>
+            </div>
 
             {% if user.role != 'CUSTOMER' %}
-              <td>
-                {% if order.customer %}
-                  {{ order.customer.username }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
+              <div class="order-info-item">
+                <span class="order-info-label">Cliente</span>
+                <span class="order-info-value">
+                  {% if order.customer %}
+                    👤 {{ order.customer.username }}
+                  {% else %}
+                    <em style="opacity: 0.5;">Sin asignar</em>
+                  {% endif %}
+                </span>
+              </div>
             {% endif %}
+          </div>
 
-            <td>{{ order.get_status_display }}</td>
-            <td>${{ order.total_amount }}</td>
-            <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
-            <td class="text-end">
-              {% if user.role == 'ADMIN' or user.role == 'WAITER' %}
-                <a href="{% url 'restaurant:order_edit' order.pk %}" class="btn btn-sm btn-outline-warning">
-                  Editar
-                </a>
-                <a href="{% url 'restaurant:order_delete' order.pk %}" class="btn btn-sm btn-outline-danger">
-                  Eliminar
-                </a>
-              {% endif %}
-            </td>
-          </tr>
-        {% empty %}
-          <tr>
-            <td colspan="7" class="text-center">
-              No hay pedidos registrados.
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+          <!-- Total -->
+          <div class="order-total">
+            <span class="total-label">Total</span>
+            <span class="total-value">${{ order.total_amount }}</span>
+          </div>
+
+          <!-- Fecha -->
+          <div class="order-date">
+            <span>🕐</span>
+            <span>{{ order.created_at|date:"d/m/Y" }} a las {{ order.created_at|date:"H:i" }}</span>
+          </div>
+
+          <!-- Acciones -->
+          {% if user.role == 'ADMIN' or user.role == 'WAITER' %}
+            <div class="order-card-footer">
+              <a href="{% url 'restaurant:order_edit' order.pk %}" class="btn-action-card btn-edit">
+                <span>✏️</span>
+                Editar
+              </a>
+              <a href="{% url 'restaurant:order_delete' order.pk %}" class="btn-action-card btn-delete">
+                <span>🗑️</span>
+                Eliminar
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-state-icon">📋</div>
+      <h3 class="empty-state-title">No hay pedidos registrados</h3>
+      <p class="empty-state-text">
+        {% if user.role == 'CUSTOMER' %}
+          Aún no has realizado ningún pedido
+        {% else %}
+          No hay pedidos en el sistema
+        {% endif %}
+      </p>
+      <a href="{% url 'restaurant:order_create' %}" class="btn-create-new">
+        <span>➕</span>
+        Crear primer pedido
+      </a>
+    </div>
+  {% endif %}
 </div>
+
+<script>
+  // Animación de entrada
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, {
+    threshold: 0.1
+  });
+
+  document.querySelectorAll('.order-card').forEach(card => {
+    observer.observe(card);
+  });
+
+  // Confirmación antes de eliminar
+  document.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      const orderId = this.closest('.order-card').querySelector('.order-id').textContent;
+      if (!confirm(`¿Estás seguro de que deseas eliminar el pedido ${orderId}?`)) {
+        e.preventDefault();
+      }
+    });
+  });
+
+  // Formatear fechas relativas (opcional - mejora UX)
+  document.querySelectorAll('.order-date').forEach(dateElement => {
+    const dateText = dateElement.querySelector('span:last-child');
+    if (dateText) {
+      const originalText = dateText.textContent;
+      // Podrías agregar lógica para mostrar "Hace 2 horas" etc.
+    }
+  });
+</script>
 {% endblock %}

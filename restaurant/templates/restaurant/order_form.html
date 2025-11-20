@@ -1,66 +1,716 @@
 {% extends 'base.html' %}
-{% block title %}Pedido{% endblock %}
+{% block title %}{% if object %}Editar pedido{% else %}Nuevo pedido{% endif %}{% endblock %}
 
 {% block content %}
-<h2 class="mb-3 text-warning">
-  {% if object %}Editar pedido{% else %}Nuevo pedido{% endif %}
-</h2>
+<style>
+  /* Container del Formulario */
+  .form-container {
+    max-width: 900px;
+    margin: 0 auto;
+    animation: fadeInUp 0.6s ease;
+  }
 
-<div class="card bg-card shadow-sm">
-  <div class="card-body">
-    <form method="post">
-      {% csrf_token %}
-      {{ form.non_field_errors }}
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
-      <div class="mb-3">
-        <label class="form-label">Mesa</label>
-        {{ form.table }}
-        {{ form.table.errors }}
-      </div>
+  /* Header del Formulario */
+  .form-header {
+    margin-bottom: 2rem;
+    animation: slideInLeft 0.6s ease;
+  }
 
-      {# Estado del pedido: solo visible para ADMIN/WAITER #}
-      {% if user.role == 'ADMIN' or user.role == 'WAITER' %}
-        <div class="mb-3">
-          <label class="form-label">Estado del pedido</label>
-          {{ form.status }}
-          {{ form.status.errors }}
-        </div>
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .form-title {
+    font-size: 2rem;
+    font-weight: 700;
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+  }
+
+  /* Card del Formulario */
+  .form-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--blur-amount));
+    -webkit-backdrop-filter: blur(var(--blur-amount));
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .form-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 70% 30%, rgba(247, 151, 30, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    animation: rotateGlow 25s linear infinite;
+  }
+
+  @keyframes rotateGlow {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Form Groups */
+  .form-group-custom {
+    margin-bottom: 1.75rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .form-label-custom {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    transition: color 0.3s ease;
+  }
+
+  .form-label-custom.required::after {
+    content: '*';
+    color: #ff3b30;
+    margin-left: 0.25rem;
+  }
+
+  /* Input Fields y Select */
+  .form-input-custom,
+  .form-select-custom {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    background: var(--glass-bg);
+    border: 1.5px solid var(--glass-border);
+    border-radius: 14px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    font-family: inherit;
+  }
+
+  .form-select-custom {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 3rem;
+  }
+
+  .form-input-custom:focus,
+  .form-select-custom:focus {
+    outline: none;
+    border-color: rgba(247, 151, 30, 0.6);
+    box-shadow: 0 0 0 4px rgba(247, 151, 30, 0.1);
+    transform: translateY(-2px);
+    background: var(--bg-secondary);
+  }
+
+  /* Input con Icono */
+  .input-wrapper {
+    position: relative;
+  }
+
+  .input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    pointer-events: none;
+    transition: all 0.3s ease;
+  }
+
+  .input-wrapper .form-select-custom {
+    padding-left: 3rem;
+  }
+
+  .input-wrapper:focus-within .input-icon {
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  /* Divider Section */
+  .section-divider {
+    border: none;
+    height: 1px;
+    background: var(--glass-border);
+    margin: 2rem 0;
+    position: relative;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .section-icon {
+    font-size: 1.5rem;
+  }
+
+  /* Items Formset */
+  .items-container {
+    position: relative;
+    z-index: 1;
+  }
+
+  .item-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr auto;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1.25rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    animation: slideIn 0.4s ease;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .item-row:hover {
+    border-color: rgba(247, 151, 30, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .item-field {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .item-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .item-row .form-select-custom,
+  .item-row .form-input-custom {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .item-row .form-select-custom {
+    padding-right: 2.5rem;
+  }
+
+  /* Delete Checkbox */
+  .delete-field {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  .delete-checkbox {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    accent-color: #ff3b30;
+  }
+
+  .delete-label {
+    font-size: 0.75rem;
+    color: #ff3b30;
+    font-weight: 600;
+  }
+
+  /* Empty Items Message */
+  .empty-items {
+    text-align: center;
+    padding: 2rem;
+    background: var(--glass-bg);
+    border: 2px dashed var(--glass-border);
+    border-radius: 16px;
+    color: var(--text-secondary);
+  }
+
+  /* Error Messages */
+  .error-message-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.3);
+    border-left: 3px solid #ff3b30;
+    border-radius: 10px;
+    color: #ff3b30;
+    font-size: 0.9rem;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .error-message-field::before {
+    content: '⚠️';
+    font-size: 1.1rem;
+  }
+
+  /* Helper Text */
+  .form-helper-text {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: 0.5rem 0.75rem;
+    background: rgba(102, 126, 234, 0.05);
+    border-left: 3px solid rgba(102, 126, 234, 0.4);
+    border-radius: 6px;
+  }
+
+  .form-helper-text::before {
+    content: 'ℹ️';
+    font-size: 1rem;
+  }
+
+  /* Botones de Acción */
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--glass-border);
+  }
+
+  .btn-submit-form {
+    flex: 1;
+    padding: 1rem 2rem;
+    background: var(--gold-gradient);
+    border: none;
+    border-radius: 14px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(247, 151, 30, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-submit-form::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .btn-submit-form:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(247, 151, 30, 0.4);
+  }
+
+  .btn-submit-form:hover::before {
+    left: 100%;
+  }
+
+  .btn-cancel-form {
+    flex: 1;
+    padding: 1rem 2rem;
+    background: transparent;
+    border: 2px solid var(--glass-border);
+    border-radius: 14px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn-cancel-form:hover {
+    background: var(--glass-bg);
+    border-color: rgba(102, 126, 234, 0.5);
+    transform: translateY(-2px);
+    color: var(--text-primary);
+  }
+
+  /* Loading State */
+  .btn-submit-form.loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .btn-submit-form.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    margin-left: -10px;
+    margin-top: -10px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .form-card {
+      padding: 2rem 1.5rem;
+    }
+
+    .form-title {
+      font-size: 1.75rem;
+    }
+
+    .item-row {
+      grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+      flex-direction: column;
+    }
+
+    .btn-submit-form,
+    .btn-cancel-form {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .form-card {
+      padding: 1.5rem 1rem;
+      border-radius: 20px;
+    }
+
+    .form-input-custom,
+    .form-select-custom {
+      font-size: 16px;
+    }
+  }
+
+  /* Animación de Focus */
+  .form-group-custom:focus-within .form-label-custom {
+    color: rgba(247, 151, 30, 0.9);
+  }
+</style>
+
+<div class="form-container">
+  <!-- Header -->
+  <div class="form-header">
+    <h1 class="form-title">
+      {% if object %}
+        ✏️ Editar Pedido
       {% else %}
-        {# Para el cliente, el campo llega como hidden desde el formulario #}
-        {{ form.status }}
+        ➕ Nuevo Pedido
+      {% endif %}
+    </h1>
+    <p class="form-subtitle">
+      Gestiona los pedidos de los clientes
+    </p>
+  </div>
+
+  <!-- Form Card -->
+  <div class="form-card">
+    <form method="post" id="orderForm">
+      {% csrf_token %}
+      
+      <!-- Errores Generales -->
+      {% if form.non_field_errors %}
+        <div class="error-message-field" style="margin-bottom: 1.5rem;">
+          {{ form.non_field_errors }}
+        </div>
       {% endif %}
 
-      <hr class="text-secondary">
-
-      <h5 class="text-warning mb-3">Platos del pedido</h5>
-
-      {{ items_formset.management_form }}
-      {% for f in items_formset %}
-        <div class="row align-items-end mb-2">
-          <div class="col-md-6">
-            <label class="form-label">Plato</label>
-            {{ f.dish }}
-            {{ f.dish.errors }}
+      <!-- Mesa -->
+      <div class="form-group-custom">
+        <label for="{{ form.table.id_for_label }}" class="form-label-custom required">
+          Mesa
+        </label>
+        <div class="input-wrapper">
+          <span class="input-icon">🪑</span>
+          <select 
+            name="{{ form.table.name }}" 
+            id="{{ form.table.id_for_label }}"
+            class="form-select-custom"
+            required
+          >
+            <option value="">Selecciona una mesa...</option>
+            {% for value, label in form.table.field.choices %}
+              {% if value %}
+                <option value="{{ value }}" {% if form.table.value == value or form.table.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
+                  {{ label }}
+                </option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+        {% if form.table.errors %}
+          <div class="error-message-field">
+            {{ form.table.errors.0 }}
           </div>
-          <div class="col-md-3">
-            <label class="form-label">Cantidad</label>
-            {{ f.quantity }}
-            {{ f.quantity.errors }}
+        {% endif %}
+      </div>
+
+      <!-- Estado del Pedido -->
+      {% if user.role == 'ADMIN' or user.role == 'WAITER' %}
+        <div class="form-group-custom">
+          <label for="{{ form.status.id_for_label }}" class="form-label-custom required">
+            Estado del pedido
+          </label>
+          <div class="input-wrapper">
+            <span class="input-icon">📊</span>
+            <select 
+              name="{{ form.status.name }}" 
+              id="{{ form.status.id_for_label }}"
+              class="form-select-custom"
+              required
+            >
+              {% for value, label in form.status.field.choices %}
+                <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>
+                  {{ label }}
+                </option>
+              {% endfor %}
+            </select>
           </div>
-          {% if f.DELETE %}
-            <div class="col-md-3">
-              <label class="form-label d-block">Eliminar</label>
-              {{ f.DELETE }}
+          {% if form.status.errors %}
+            <div class="error-message-field">
+              {{ form.status.errors.0 }}
             </div>
           {% endif %}
         </div>
-      {% endfor %}
+      {% else %}
+        <!-- Campo hidden para clientes -->
+        <input type="hidden" name="{{ form.status.name }}" value="{{ form.status.value }}">
+      {% endif %}
 
-      <button type="submit" class="btn btn-warning">Guardar</button>
-      <a href="{% url 'restaurant:order_list' %}" class="btn btn-secondary ms-2">
-        Cancelar
-      </a>
+      <!-- Divider -->
+      <hr class="section-divider">
+
+      <!-- Sección de Items -->
+      <div class="items-container">
+        <h3 class="section-title">
+          <span class="section-icon">🍽️</span>
+          <span>Platos del Pedido</span>
+        </h3>
+
+        {{ items_formset.management_form }}
+        
+        {% for f in items_formset %}
+          <div class="item-row">
+            <!-- Plato -->
+            <div class="item-field">
+              <label class="item-label">Plato</label>
+              <select 
+                name="{{ f.dish.name }}" 
+                id="{{ f.dish.id_for_label }}"
+                class="form-select-custom"
+              >
+                <option value="">Selecciona un plato...</option>
+                {% for value, label in f.dish.field.choices %}
+                  {% if value %}
+                    <option value="{{ value }}" {% if f.dish.value == value or f.dish.value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>
+                      {{ label }}
+                    </option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+              {% if f.dish.errors %}
+                <small class="text-danger d-block mt-2">{{ f.dish.errors.0 }}</small>
+              {% endif %}
+            </div>
+
+            <!-- Cantidad -->
+            <div class="item-field">
+              <label class="item-label">Cantidad</label>
+              <input 
+                type="number" 
+                name="{{ f.quantity.name }}" 
+                id="{{ f.quantity.id_for_label }}"
+                class="form-input-custom"
+                placeholder="1"
+                min="1"
+                {% if f.quantity.value %}value="{{ f.quantity.value }}"{% endif %}
+              >
+              {% if f.quantity.errors %}
+                <small class="text-danger d-block mt-2">{{ f.quantity.errors.0 }}</small>
+              {% endif %}
+            </div>
+
+            <!-- Delete -->
+            {% if f.DELETE %}
+              <div class="delete-field">
+                <label class="delete-label">Eliminar</label>
+                <input 
+                  type="checkbox" 
+                  name="{{ f.DELETE.name }}" 
+                  id="{{ f.DELETE.id_for_label }}"
+                  class="delete-checkbox"
+                >
+              </div>
+            {% endif %}
+            
+            <!-- Hidden ID field if exists -->
+            {% if f.id %}
+              {{ f.id }}
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Botones -->
+      <div class="form-actions">
+        <a href="{% url 'restaurant:order_list' %}" class="btn-cancel-form">
+          Cancelar
+        </a>
+        <button type="submit" class="btn-submit-form" id="submitBtn">
+          {% if object %}
+            Actualizar pedido
+          {% else %}
+            Crear pedido
+          {% endif %}
+        </button>
+      </div>
     </form>
   </div>
 </div>
+
+<script>
+  // Form Submit Loading State
+  document.getElementById('orderForm').addEventListener('submit', function() {
+    const btn = document.getElementById('submitBtn');
+    btn.classList.add('loading');
+    btn.textContent = '';
+  });
+
+  // Animación de Entrada de Campos
+  document.addEventListener('DOMContentLoaded', function() {
+    const formGroups = document.querySelectorAll('.form-group-custom, .item-row');
+    formGroups.forEach((group, index) => {
+      group.style.opacity = '0';
+      group.style.transform = 'translateY(20px)';
+      
+      setTimeout(() => {
+        group.style.transition = 'all 0.5s ease';
+        group.style.opacity = '1';
+        group.style.transform = 'translateY(0)';
+      }, 100 + (index * 50));
+    });
+  });
+
+  // Prevenir pérdida de datos
+  let formModified = false;
+  const formInputs = document.querySelectorAll('input, select');
+  
+  formInputs.forEach(input => {
+    input.addEventListener('change', () => {
+      formModified = true;
+    });
+  });
+
+  window.addEventListener('beforeunload', function(e) {
+    if (formModified) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  document.getElementById('orderForm').addEventListener('submit', function() {
+    formModified = false;
+  });
+
+  // Validación de cantidad positiva
+  document.querySelectorAll('input[type="number"]').forEach(input => {
+    input.addEventListener('input', function() {
+      if (this.value < 1) {
+        this.value = 1;
+      }
+    });
+  });
+
+  // Visual feedback para items marcados para eliminar
+  document.querySelectorAll('.delete-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      const itemRow = this.closest('.item-row');
+      if (this.checked) {
+        itemRow.style.opacity = '0.5';
+        itemRow.style.borderColor = 'rgba(255, 59, 48, 0.5)';
+        itemRow.style.background = 'rgba(255, 59, 48, 0.05)';
+      } else {
+        itemRow.style.opacity = '1';
+        itemRow.style.borderColor = '';
+        itemRow.style.background = '';
+      }
+    });
+  });
+</script>
 {% endblock %}
